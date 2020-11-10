@@ -1,3 +1,9 @@
+**Project Name**
+In-person Presidential campaign rallies and trends in country-level COVID-19 cases and deaths
+
+**Project Members**
+Daniel Arias, Kritika Anand, and Tianxiao Zhao
+
 **Background and Motivation**
 
 In-person rallies are large events and may contribute to the spread of COVID-19; in many jurisdictions in the United States, large gatherings have been prohibited or are regulated to promote social distancing and reduce the transmission of COVID-19, and the federal government has issued guidance underscoring the risk large events pose when social distancing may not be readily enforceable. In the lead-up to the November 3 2020 Presidential election, President Trump has conducted numerous in-person rallies, both before and after the White House COVID-19 outbreak of September-October 2020. In the 30 days prior to the election, President Trump held 45 in-person rallies across multiple states (Vice President Biden has held numerous drive-in rallies during the same period). Given social distancing guidelines and numerous COVID-19 diagnoses among the President’s re-election campaign (including the President himself), numerous public health researchers, professionals, and observers have raised concerns that the President’s in-person rallies may be contributing to the spread of COVID-19. Conflicting investigations and working papers have suggested that rallies are and are not associated with local spikes in COVID-19 transmission (Dave et al 2020; Bernheim et al 2020). Motivated by the urgency of the COVID-19 pandemic and the saliency of whether in-person rallies may be associated with excess cases and mortality, we are interested in using time-series data on county-level COVID-19 cases and deaths to visualize trends in transmission in counties in which in-person campaign rallies were hosted and to compare these counties to others in which in-person events were not held. 
