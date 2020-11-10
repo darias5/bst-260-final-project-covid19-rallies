@@ -18,7 +18,7 @@ Increases in COVID-19 cases and deaths that are potentially attributable to poli
 *Optional features:*
 Choice of control -- propensity score matching, synthetic controls
 
-**Data?**
+**Data**
 
 Our data will primarily be collected from these two sources:
  
