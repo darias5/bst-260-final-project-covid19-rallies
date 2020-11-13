@@ -17,16 +17,221 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, root.dir = "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/")
+rm(list=ls())
+
+## Load Libraries
+library(tidyverse)
+library(lubridate)
+library(foreach)
+library(ggplot2)
+
+
+## Directory and file paths 
+path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+outputpath <- paste(path,'results/', sep = "/")
+datapath <- paste(path,'data/', sep = "/")
+
+## Relevent Dates 
+#training_start_date = as.Date("2020-03-07")
+
+## Set Seed
+set.seed(20)
+
+
+
+
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Step 1: Prepare COVID-19 Data
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+To-Do List
+1) Load data of Trump visits
+2) Find policies (maybe state-level?)
+3) Find political characteristics (2018 voting? 2016 voting?)
+
+```{r Load Data,  include=FALSE}
+
+## Step 1a: Import Case Dataset 
+cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.csv")) %>%
+  mutate(state_fips = as.numeric(substr(FIPS,1,2))) %>%
+  mutate(county_fips = as.numeric(substr(FIPS,3,5))) %>%
+  mutate(fips = as.numeric(FIPS)) %>%
+  drop_na(fips) %>%
+  select(-UID, -iso2, -iso3, -code3, -Country_Region, -FIPS) %>%
+  filter(Province_State != "American Samoa", 
+         Province_State != 'Puerto Rico',
+         Province_State != "Guam", 
+         Province_State != "Northern Mariana Islands", 
+         Province_State != "Virgin Islands", 
+         Province_State != 'Diamond Princess', 
+         Province_State != 'Grand Princess', 
+         Admin2 != "Unassigned") %>% 
+  rename(county_name = Admin2, 
+         state_name = Province_State, 
+         lat = Lat, 
+         long = Long_, 
+         full_name = Combined_Key ) %>%
+  pivot_longer(contains("/"), names_to = "date", values_to = "cases") %>%
+  mutate(date = as.Date(date, "%m/%d/%y"))
+
+## Step 1b: Import Death Dataset 
+deaths <- read_csv(file = file.path(datapath,"time_series_covid19_deaths_US.csv")) %>%
+  mutate(fips = as.numeric(FIPS)) %>%
+  drop_na(fips) %>%
+  filter(Province_State != "American Samoa", 
+         Province_State != 'Puerto Rico',
+         Province_State != "Guam", 
+         Province_State != "Northern Mariana Islands", 
+         Province_State != "Virgin Islands", 
+         Province_State != 'Diamond Princess', 
+         Province_State != 'Grand Princess',
+         Admin2 != "Unassigned") %>% 
+  select(-UID, -iso2, -iso3, -code3, -Country_Region, -FIPS, -Lat, -Long_, -Province_State, -Combined_Key, -Admin2) %>%
+  pivot_longer(contains("/"), names_to = "date", values_to = "deaths") %>%
+  mutate(date = as.Date(date, "%m/%d/%y"))
+
+## Step 1c: Merge the data together 
+df <- cases %>%
+  left_join(deaths, by = c('fips','date')) %>%
+  arrange(fips, date)
+
+rm(cases, deaths)
+
+## Step 1d: Load US Census Data - By Race
+load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
+
+racial_demographics <- cc %>%
+  rename_all(.funs = tolower) %>%
+  filter(year == 12) %>% ## 2019
+  filter(agegrp == 0) %>% ## Totals only 
+  mutate(black_pop = ba_male + ba_female, 
+         white_pop = wa_male + wa_female, 
+         asian_pop = aa_male + aa_female, 
+         native_pop = ia_male + ia_female, 
+         pacific_pop = na_male + na_female, 
+         hisp_pop = h_male + h_female) %>%
+  select(state_fips = state, 
+         county_fips = county, 
+         county_name_long = ctyname,
+         total_pop = tot_pop,
+         black_pop, white_pop, asian_pop, native_pop,  pacific_pop, hisp_pop)
+
+## Step 1e: Load US Census Data - By Age 
+age_demographics <- cc %>%
+  rename_all(.funs = tolower) %>%
+  filter(year == 12) %>% ## 2019
+  filter(agegrp > 13) %>% ## Keep if 65 or older
+  select(state_fips = state, 
+         county_fips = county, 
+         total_pop = tot_pop) %>%
+  group_by(state_fips, county_fips) %>%
+  summarise(senior_pop = sum(total_pop))
+  
+## Step 1f: Merge Demographic Info with Case and Death Counts
+df <- df %>%
+  left_join(racial_demographics, by=c('state_fips','county_fips')) %>%
+  left_join(age_demographics, by=c('state_fips','county_fips')) 
+
+rm(racial_demographics, age_demographics)
+
+## Step 1g: Load US Mobility data
+mobility <- read_csv(file = file.path(datapath,"DL-us-mobility-daterow.csv")) %>%
+  rename_all(.funs = tolower) %>%
+  mutate(fips = as.numeric(fips)) %>%
+  drop_na(admin1) %>%
+  drop_na(admin2) %>%
+  select(date, fips, m_samples = samples, m50, m50_index) 
+
+## Step 1h: Merge Mobility Info with Full Dataset
+df <- df %>%
+  left_join(mobility, by = c('fips','date')) %>%
+  arrange(fips, date)
+
+rm(mobility)
+
+## Step 1i: Load Median Income 
+income <- read_csv(file = file.path(datapath,"nhgis0014_ds239_20185_2018_county_E.csv")) %>%
+  select(median_inc = AJZAE001, state_name = STATE, county_name_long = COUNTY)
+
+## Step 1j: Merge Median Income Info with Full Dataset
+df <- df %>%
+  left_join(income, by = c('state_name','county_name_long'))
+
+rm(income)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Step 2: Summary Statistics and visualizations
+
+To-Do List:
+
+1) Re-load data and get a sense of scale of unnassigned cases and deaths per state
+2) Get a sense of the difference between counties trump visited and the average county. 
+
+
+```{r basic visualization }
+
+
+## Snapshot of data
+df_snapshot <- df %>%
+  mutate(state = tolower(state))
+
+## Get information from maps package for making State-Choropleth 
+states <- as_tibble(map_data('state')) %>%
+  rename(state = region) %>%
+  left_join(df_snapshot, by = "state") %>%
+  dplyr::select(-subregion)
+
+## Map 1: Population 
+
+map_population <- ggplot() + 
+  geom_polygon(data = states, aes(x= long, y = lat, fill = population, group = group)) +
+  theme_nothing(legend = TRUE) + coord_map() + 
+  ggtitle("State Population in 2018") + 
+  theme(plot.title = element_text(hjust =0.5))+
+  scale_fill_viridis(option = "magma", direction = -1, name = "Population", labels = comma)
+
+map_fatalities <- ggplot() + 
+  geom_polygon(data = states, aes(x= long, y = lat, fill = fatalities, group = group)) +
+  theme_nothing(legend = TRUE) + coord_map() + 
+  ggtitle("State Fatalities as of April 26th, 2020") + 
+  theme(plot.title = element_text(hjust =0.5))+
+  scale_fill_viridis(option = "magma", direction = -1, name = "Fatalities", labels = comma)
+
+map_cases <- ggplot() + 
+  geom_polygon(data = states, aes(x= long, y = lat, fill = confirmedcases, group = group)) +
+  theme_nothing(legend = TRUE) + coord_map() + 
+  ggtitle("Confirmed cases as of April 26th, 2020") + 
+  theme(plot.title = element_text(hjust =0.5))+
+  scale_fill_viridis(option = "magma", direction = -1, name = "Confirmed Cases", labels = comma)
+
+map_gov <- ggplot() + 
+  geom_polygon(data = states, aes(x= long, y = lat, fill = gov_control, group = group)) +
+  theme_nothing(legend = TRUE) + coord_map() + 
+  ggtitle("Governor's Political Party in 2020") + 
+  theme(plot.title = element_text(hjust =0.5))+
+  scale_fill_gradient(low = "blue", high = "red", guide = "legend", breaks= c(0,1), labels = c("Democrat", "Republican"), name = "Republican / Democrat")
+
+map_sip <- ggplot() + 
+  geom_polygon(data = states, aes(x= long, y = lat, fill = days_since_enactment, group = group)) +
+  theme_nothing(legend = TRUE) + coord_map() + 
+  geom_polygon(color = "black") +
+  ggtitle("Days since Shelter-In-Place Enacted as of April 26th, 2020") + 
+  theme(plot.title = element_text(hjust =0.5)) +
+  scale_fill_distiller(palette ="Greys", direction = 1, ) # or direction=1
+
+
+map_fatalities
+map_sip
+
+
+ggsave(filename = file.path(outputpath,"map_population.pdf"), map_population)
+ggsave(filename = file.path(outputpath,"map_fatalities.pdf"), map_fatalities)
+ggsave(filename = file.path(outputpath,"map_cases.pdf"), map_cases)
+ggsave(filename = file.path(outputpath,"map_gov.pdf"), map_gov)
+ggsave(filename = file.path(outputpath,"map_sip.pdf"), map_sip)
+
+rm(map_population, map_fatalities, map_cases, map_gov, map_sip)
+rm(states, df_snapshot)
