@@ -11,11 +11,11 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+To-Do List
+1) Kritika -- add county fips numbers to rallies.csv
+2) Daniel -- loading updated rallies.csv to dataframe
+3) Daniel -- fix choropleth data
+4) All -- next week, work on centering time data around rallies (before and after), start visualizations of time series data
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, root.dir = "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/")
@@ -45,13 +45,7 @@ set.seed(20)
 
 ```
 
-
 ## Step 1: Prepare COVID-19 Data
-
-To-Do List
-1) Load data of Trump visits
-2) Find policies (maybe state-level?)
-3) Find political characteristics (2018 voting? 2016 voting?)
 
 ```{r Load Data,  include=FALSE}
 
@@ -166,12 +160,6 @@ rm(cc)
 ```
 
 ## Step 2: Summary Statistics and visualizations
-
-To-Do List:
-
-1) Re-load data and get a sense of scale of unnassigned cases and deaths per state
-2) Get a sense of the difference between counties trump visited and the average county. 
-
 
 ```{r basic visualization }
 
