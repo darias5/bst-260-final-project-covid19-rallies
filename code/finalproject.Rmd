@@ -26,6 +26,7 @@ library(tidyverse)
 library(lubridate)
 library(foreach)
 library(ggplot2)
+library(maps)
 
 
 ## Directory and file paths 
@@ -161,6 +162,7 @@ df <- df %>%
   left_join(income, by = c('state_name','county_name_long'))
 
 rm(income)
+rm(cc)
 ```
 
 ## Step 2: Summary Statistics and visualizations
@@ -176,12 +178,12 @@ To-Do List:
 
 ## Snapshot of data
 df_snapshot <- df %>%
-  mutate(state = tolower(state))
+  mutate(state_name = tolower(state_name))
 
 ## Get information from maps package for making State-Choropleth 
 states <- as_tibble(map_data('state')) %>%
-  rename(state = region) %>%
-  left_join(df_snapshot, by = "state") %>%
+  rename(state_name = region) %>%
+  left_join(df_snapshot, by = "state_name") %>%
   dplyr::select(-subregion)
 
 ## Map 1: Population 
@@ -207,31 +209,12 @@ map_cases <- ggplot() +
   theme(plot.title = element_text(hjust =0.5))+
   scale_fill_viridis(option = "magma", direction = -1, name = "Confirmed Cases", labels = comma)
 
-map_gov <- ggplot() + 
-  geom_polygon(data = states, aes(x= long, y = lat, fill = gov_control, group = group)) +
-  theme_nothing(legend = TRUE) + coord_map() + 
-  ggtitle("Governor's Political Party in 2020") + 
-  theme(plot.title = element_text(hjust =0.5))+
-  scale_fill_gradient(low = "blue", high = "red", guide = "legend", breaks= c(0,1), labels = c("Democrat", "Republican"), name = "Republican / Democrat")
-
-map_sip <- ggplot() + 
-  geom_polygon(data = states, aes(x= long, y = lat, fill = days_since_enactment, group = group)) +
-  theme_nothing(legend = TRUE) + coord_map() + 
-  geom_polygon(color = "black") +
-  ggtitle("Days since Shelter-In-Place Enacted as of April 26th, 2020") + 
-  theme(plot.title = element_text(hjust =0.5)) +
-  scale_fill_distiller(palette ="Greys", direction = 1, ) # or direction=1
-
-
-map_fatalities
-map_sip
-
 
 ggsave(filename = file.path(outputpath,"map_population.pdf"), map_population)
 ggsave(filename = file.path(outputpath,"map_fatalities.pdf"), map_fatalities)
 ggsave(filename = file.path(outputpath,"map_cases.pdf"), map_cases)
-ggsave(filename = file.path(outputpath,"map_gov.pdf"), map_gov)
-ggsave(filename = file.path(outputpath,"map_sip.pdf"), map_sip)
 
-rm(map_population, map_fatalities, map_cases, map_gov, map_sip)
+rm(map_population, map_fatalities, map_cases)
 rm(states, df_snapshot)
+
+```
