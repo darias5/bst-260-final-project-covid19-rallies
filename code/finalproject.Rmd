@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 To-Do List
-1) Kritika -- add county fips numbers to rallies.csv
+1) Kritika -- add county fips numbers to rallies.csv -- https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697
 2) Daniel -- loading updated rallies.csv to dataframe
 3) Daniel -- fix choropleth data
 4) All -- next week, work on centering time data around rallies (before and after), start visualizations of time series data
