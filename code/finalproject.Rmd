@@ -27,6 +27,7 @@ library(lubridate)
 library(foreach)
 library(ggplot2)
 library(maps)
+library(viridis)
 
 
 ## Directory and file paths 
@@ -165,7 +166,7 @@ rm(cc)
 
 
 ## Snapshot of data
-df_snapshot <- df %>%
+df_snapshot <- df %>%  ## 
   mutate(state_name = tolower(state_name))
 
 ## Get information from maps package for making State-Choropleth 
@@ -176,9 +177,18 @@ states <- as_tibble(map_data('state')) %>%
 
 ## Map 1: Population 
 
+df_snapshot <- df %>% filter(date == "2020-07-07")
+
+df_snapshot %>%
+  ggplot(aes(long, lat, group = fips, fill = population)) +
+  geom_polygon(color = NA) +
+  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+  labs(fill = "Population")
+
+
 map_population <- ggplot() + 
-  geom_polygon(data = states, aes(x= long, y = lat, fill = population, group = group)) +
-  theme_nothing(legend = TRUE) + coord_map() + 
+  geom_polygon(data = df, aes(x= long, y = lat, fill = population, group = group)) +
+  coord_map() + 
   ggtitle("State Population in 2018") + 
   theme(plot.title = element_text(hjust =0.5))+
   scale_fill_viridis(option = "magma", direction = -1, name = "Population", labels = comma)
