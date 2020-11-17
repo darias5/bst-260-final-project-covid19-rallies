@@ -215,4 +215,7 @@ ggsave(filename = file.path(outputpath,"map_cases.pdf"), map_cases)
 rm(map_population, map_fatalities, map_cases)
 rm(states, df_snapshot)
 
+# Code for adding circles that identify where rallies were located
+geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
+
 ```
