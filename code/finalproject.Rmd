@@ -201,6 +201,24 @@ df <- df %>%
   mutate(new_deaths_7dayavg_per_mil_cap = new_deaths_7dayavg / population * 1000000)
 ```
 
+
+```{R}
+# ADD RALLY DATA HERE -- COULD FOLKS DO THE FOLLOWING
+# Add code to load in rally csv
+# Filter out rallies that predate February 26, 2020 (first community spread in February 26)
+# Full join by fips
+# Drop uneccessary duplicate columns to save data space
+# Drop the rally database using the rm() function after merging (to save memory)
+# Make sure dates of rallies are saved as.date
+# Create a binary indicator (1,0) for whether the county held a rally (on any date)
+# Among counties that held a rally, create a variable which is the number of days before and after a rally
+
+  # You can use the date between function (e.g., if a rally happens on Oct. 10, the value for this variable for a given county on Oct. 9 should be -1.
+  # For October 11, it should be 1). This variable will be the x axis that we can use to plot all rally counties together (we are centering them by the 
+  # date of the ralies)
+
+```
+
 ```{R}
 
 # Downloading map data
