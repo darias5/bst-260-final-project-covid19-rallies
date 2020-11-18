@@ -7,8 +7,9 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
+```{R}
 knitr::opts_chunk$set(echo = TRUE)
+
 ```
 
 To-Do List
@@ -17,9 +18,7 @@ To-Do List
 3) Daniel -- fix choropleth data
 4) All -- next week, work on centering time data around rallies (before and after), start visualizations of time series data
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, root.dir = "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/")
-rm(list=ls())
+```{r}
 
 ## Load Libraries
 library(tidyverse)
@@ -29,18 +28,13 @@ library(foreach)
 library(ggplot2)
 library(maps)
 library(viridis)
+library(zoo)
 
 
 ## Directory and file paths 
 path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
-
-## Relevent Dates 
-#training_start_date = as.Date("2020-03-07")
-
-## Set Seed
-set.seed(20)
 
 
 
@@ -165,62 +159,173 @@ rm(cc)
 
 ```{r basic visualization }
 
+df <- df[-c(3:4)] #Cleaning data to drop columns that are not needed
+df <- rename(df, "population" = "Population")
 
-library(maps)
-plot_usmap(regions = "counties") + 
+########CASES
 
+# Creating a variable that contains the number of new confirmed cases
+df <- df %>% 
+  arrange(date) %>% 
+  group_by(fips)  %>% 
+  mutate(new_cases = cases - lag(cases))
 
-## Snapshot of data
-df_snapshot <- df %>%  ## 
-  mutate(state_name = tolower(state_name))
-
-## Get information from maps package for making State-Choropleth 
-states <- as_tibble(map_data('state')) %>%
-  rename(state_name = region) %>%
-  left_join(df_snapshot, by = "state_name") %>%
-  dplyr::select(-subregion)
-
-## Map 1: Population 
-
-df_snapshot <- df %>% filter(date == "2020-07-07")
-
-df_snapshot %>%
-  ggplot(aes(long, lat, group = fips, fill = population)) +
-  geom_polygon(color = NA) +
-  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-  labs(fill = "Population")
+# Creating a rolling 7-day average for the number of new confirmed cases
+df <- df %>% 
+  arrange(date) %>% 
+  group_by(fips) %>% 
+  mutate(new_cases_7dayavg = rollmean(new_cases, k = 7, fill = NA))
 
 
-map_population <- ggplot() + 
-  geom_polygon(data = df, aes(x= long, y = lat, fill = population, group = group)) +
-  coord_map() + 
-  ggtitle("State Population in 2018") + 
-  theme(plot.title = element_text(hjust =0.5))+
-  scale_fill_viridis(option = "magma", direction = -1, name = "Population", labels = comma)
+# Creating a new variable that calculates the seven-day rolling average of new cases per million
+df <- df %>% 
+  mutate(new_cases_7dayavg_per_mil_cap = new_cases_7dayavg / population * 1000000)
 
-map_fatalities <- ggplot() + 
-  geom_polygon(data = states, aes(x= long, y = lat, fill = fatalities, group = group)) +
-  theme_nothing(legend = TRUE) + coord_map() + 
-  ggtitle("State Fatalities as of April 26th, 2020") + 
-  theme(plot.title = element_text(hjust =0.5))+
-  scale_fill_viridis(option = "magma", direction = -1, name = "Fatalities", labels = comma)
+######### DEATHS
 
-map_cases <- ggplot() + 
-  geom_polygon(data = states, aes(x= long, y = lat, fill = confirmedcases, group = group)) +
-  theme_nothing(legend = TRUE) + coord_map() + 
-  ggtitle("Confirmed cases as of April 26th, 2020") + 
-  theme(plot.title = element_text(hjust =0.5))+
-  scale_fill_viridis(option = "magma", direction = -1, name = "Confirmed Cases", labels = comma)
+# Creating a variable that contains the number of new confirmed cases
+df <- df %>% 
+  arrange(date) %>% 
+  group_by(fips)  %>% 
+  mutate(new_deaths = deaths - lag(deaths))
+
+# Creating a rolling 7-day average for the number of new confirmed deaths
+df <- df %>% 
+  arrange(date) %>% 
+  group_by(fips) %>% 
+  mutate(new_deaths_7dayavg = rollmean(new_deaths, k = 7, fill = NA))
 
 
-ggsave(filename = file.path(outputpath,"map_population.pdf"), map_population)
-ggsave(filename = file.path(outputpath,"map_fatalities.pdf"), map_fatalities)
-ggsave(filename = file.path(outputpath,"map_cases.pdf"), map_cases)
+# Creating a new variable that calculates the seven-day rolling average of new deaths per million
+df <- df %>% 
+  mutate(new_deaths_7dayavg_per_mil_cap = new_deaths_7dayavg / population * 1000000)
+```
 
-rm(map_population, map_fatalities, map_cases)
-rm(states, df_snapshot)
+```{R}
+
+# Downloading map data
+us_map = map_data("county")
+fips <- data.frame(county.fips)
+us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
+us_map <- full_join(fips, us_map, by = "polyname")
+
+```
+
+
+```{R}
+# Merging map data into dataframe
+
+df <- full_join(df, us_map, by = c("fips"))
+rm(us_map)
+rm(fips)
+
+```
+
+
+
+```{R}
+
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg_per_mil_cap)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 cases per million people",
+        subtitle="on August 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,300),    # Forcing upper limit of 300 cases per million capita per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 cases",
+        subtitle="on August 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,150),    # Forcing upper limit of 150 cases per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = deaths)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of cumulative COVID-19 deaths",
+        subtitle="as of August 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Cumulative deaths") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,1000),    # Forcing upper limit of 1000 deaths
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg_per_mil_cap)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 deaths per million people",
+        subtitle="on August 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,100),    # Forcing upper limit of 100 deaths per million capita per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 deaths",
+        subtitle="on August 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,100),    # Forcing upper limit of 100 deaths per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+df %>% filter(date == "2020-08-01") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = total_pop)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Total population",
+        caption="Source: US Census Bureau",
+        fill="Population size") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,1000000),    # Forcing upper limit of 1,000,000 pop
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+```
+
+```{R}
 
 # Code for adding circles that identify where rallies were located
-geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
+# geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
 
 ```
