@@ -225,14 +225,15 @@ rally_data <- rally_data %>%
 df <- df %>%
   full_join(rally_data, by = c("fips", "date")) %>%
   group_by(fips) %>%
-  mutate(rally_ind = ifelse(sum(rally, na.rm = T) == 1, 1, 0))
+  mutate(rally_ind = ifelse(sum(rally, na.rm = T) != 0, 1, 0))
 
 
 temp <- df %>%
   group_by(fips) %>%
   filter(sum(rally, na.rm = T) != 0) %>%
-  mutate(day_to_rally = date - date[which(rally == 1)]) %>%
-  select(date, fips, day_to_rally)
+  mutate(day_to_rally_1 = date - date[which(rally == 1)][1]) %>%
+  mutate(day_to_rally_2 = date - date[which(rally == 1)][2]) %>%
+  select(date, fips, day_to_rally_1, day_to_rally_2)
 
 df <- df %>%
   full_join(temp, by = c("fips", "date"))
