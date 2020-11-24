@@ -33,6 +33,7 @@ library(readxl)
 
 
 ## Directory and file paths 
+#path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies"
 path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
@@ -93,6 +94,7 @@ df <- cases %>%
 rm(cases, deaths)
 
 ## Step 1d: Load US Census Data - By Race
+#load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 
 racial_demographics <- cc %>%
@@ -220,18 +222,20 @@ rally_data <- rally_data %>%
 
 df <- df %>%
   full_join(rally_data, by = c("fips", "date")) %>%
-  mutate(rally_ind = ifelse(is.na(rally), 0, 1))
-df$rally <- NULL
+  group_by(fips) %>%
+  mutate(rally_ind = ifelse(sum(rally, na.rm = T) == 1, 1, 0))
 
-temp <- df %>% 
-  group_by(fips) %>% 
-  filter(sum(rally_ind) != 0) %>%
-  mutate(day_to_rally = date - date[which(rally_ind == 1)]) %>%
+
+temp <- df %>%
+  group_by(fips) %>%
+  filter(sum(rally, na.rm = T) != 0) %>%
+  mutate(day_to_rally = date - date[which(rally == 1)]) %>%
   select(date, fips, day_to_rally)
 
 df <- df %>%
   full_join(temp, by = c("fips", "date"))
 
+df$rally <- NULL
 rm(temp)
 rm(rally_data)
 # Filter out rallies that predate February 26, 2020 (first community spread in February 26)
