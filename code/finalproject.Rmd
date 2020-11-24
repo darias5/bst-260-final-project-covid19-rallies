@@ -139,6 +139,8 @@ mobility <- read_csv(file = file.path(datapath,"DL-us-mobility-daterow.csv")) %>
   drop_na(admin2) %>%
   select(date, fips, m_samples = samples, m50, m50_index) 
 
+df <- df %>% filter(date > ymd(200226))
+
 ## Step 1h: Merge Mobility Info with Full Dataset
 df <- df %>%
   left_join(mobility, by = c('fips','date')) %>%
@@ -375,6 +377,17 @@ df %>% filter(date == "2020-08-01") %>%
    scale_fill_viridis_c(option = "plasma",
                                limits = c(0,1000000),    # Forcing upper limit of 1,000,000 pop
                                oob = scales::squish) # Letting values out of bounds be squished to scale
+```
+
+
+
+```{R}
+
+df %>%   filter(rally_ind == 1) %>%  filter(abs(day_to_rally)<=21) %>%
+  ggplot(day_to_rally, new_deaths_7dayavg_per_mil_cap, color = fips) +
+  geom_line()
+
+
 ```
 
 ```{R}
