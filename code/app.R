@@ -7,7 +7,9 @@
 # Directory and file paths 
 ##########################################
 
+
 path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+#path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -18,9 +20,14 @@ datapath <- paste(path,'data/', sep = "/")
 # Libraries
 library(shiny)
 library(tidyverse)
+library(dplyr)
 library(lubridate)
-library(zoo)
+library(foreach)
+library(ggplot2)
 library(maps)
+library(viridis)
+library(zoo)
+library(readxl)
 
 
 ##########################################
@@ -33,7 +40,7 @@ cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.cs
     mutate(county_fips = as.numeric(substr(FIPS,3,5))) %>%
     mutate(fips = as.numeric(FIPS)) %>%
     drop_na(fips) %>%
-    select(-UID, -iso2, -iso3, -code3, -County_Region, -FIPS) %>%
+    select(-UID, -iso2, -iso3, -code3, -Country_Region, -FIPS) %>%
     filter(Province_State != "American Samoa", 
            Province_State != 'Puerto Rico',
            Province_State != "Guam", 
@@ -52,19 +59,19 @@ cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.cs
 
 ## Step 1b: Import Death Dataset 
 deaths <- read_csv(file = file.path(datapath,"time_series_covid19_deaths_US.csv")) %>%
-    mutate(fips = as.numeric(FIPS)) %>%
-    drop_na(fips) %>%
-    filter(Province_State != "American Samoa", 
-           Province_State != 'Puerto Rico',
-           Province_State != "Guam", 
-           Province_State != "Northern Mariana Islands", 
-           Province_State != "Virgin Islands", 
-           Province_State != 'Diamond Princess', 
-           Province_State != 'Grand Princess',
-           Admin2 != "Unassigned") %>% 
-    select(-UID, -iso2, -iso3, -code3, -County_Region, -FIPS, -Lat, -Long_, -Province_State, -Combined_Key, -Admin2) %>%
-    pivot_longer(contains("/"), names_to = "date", values_to = "deaths") %>%
-    mutate(date = as.Date(date, "%m/%d/%y"))
+  mutate(fips = as.numeric(FIPS)) %>%
+  drop_na(fips) %>%
+  filter(Province_State != "American Samoa", 
+         Province_State != 'Puerto Rico',
+         Province_State != "Guam", 
+         Province_State != "Northern Mariana Islands", 
+         Province_State != "Virgin Islands", 
+         Province_State != 'Diamond Princess', 
+         Province_State != 'Grand Princess',
+         Admin2 != "Unassigned") %>% 
+  select(-UID, -iso2, -iso3, -code3, -Country_Region, -FIPS, -Lat, -Long_, -Province_State, -Combined_Key, -Admin2) %>%
+  pivot_longer(contains("/"), names_to = "date", values_to = "deaths") %>%
+  mutate(date = as.Date(date, "%m/%d/%y"))
 
 ## Step 1c: Merge the data together 
 df <- cases %>%
@@ -75,6 +82,7 @@ rm(cases, deaths)
 
 ## Step 1d: Load US Census Data - By Race
 load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
+#load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 
 racial_demographics <- cc %>%
     rename_all(.funs = tolower) %>%
@@ -227,9 +235,47 @@ rm(fips)
 ##########################################
 
 ui <- fluidPage(
+  theme = shinythemes::shinytheme("flatly"),
+  
+  tabsetPanel(
+    ##  Tab for line plot
+    tabPanel(
+      "Line Plot",
+      
+      ##  Title Panel
+      titlePanel("New Cases on 7-day Average per million capita"),
+      ##  Sidebar 
+      sidebarLayout(
+        ##  "Buttons"
+        sidebarPanel(
+          selectInput(
+            inputId = "chosen_rally_county",
+            label = "Please specify a county with rally",
+            choices = unique(df[which(df$rally_ind == 1),]$full_name)
+          ),
+          selectizeInput(
+            inputId = "chosen_county",
+            label = "Or, choose counties you wanted",
+            choices = unique(df$full_name)[order(unique(df$full_name))],
+            multiple = T,
+            options = list(maxItems = 3)
+          )
+        ),
+        ##  Main panel
+        mainPanel(
+          plotOutput("line_plot"),
+          textOutput("rally_info")
+        )
+      )
+    ),
     
+    ##  Tab for other plot, spatial etc.
+    tabPanel(
+      "Other Plot"
+    )
     
-    
+  )
+  
 ) # Closing the ui
 
 ##########################################
@@ -237,9 +283,83 @@ ui <- fluidPage(
 ##########################################
 
 server <- function(input, output) {
+  
+  
+  selected_data <- reactive({
+    if(is.null(input$chosen_county)){
+      df %>% 
+        filter(full_name == input$chosen_rally_county) %>%
+        select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
+        distinct()
+    }else{
+      df %>% 
+        filter(full_name %in% c(input$chosen_rally_county, 
+                                     input$chosen_county)) %>%
+        select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
+        distinct()
+    }
+  })
+  
+  rally_num <- reactive(
+    sum(selected_data()$day_to_rally_1 == 0, na.rm = T) + 
+    sum(selected_data()$day_to_rally_2 == 0, na.rm = T)
+  )
+  
+  rally_1_date <- reactive(selected_data() %>% 
+                             ungroup() %>% 
+                             filter(day_to_rally_1 == 0) %>% select(date))
+  rally_2_date <- reactive(selected_data() %>% 
+                             ungroup() %>% 
+                             filter(day_to_rally_2 == 0) %>% select(date))
+  
+  p1 <- renderPlot({
+    if(is.null(input$chosen_county)){
+      selected_data() %>% 
+        ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap)) + 
+        geom_line() + 
+        geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                   colour = "red",
+                   linetype = "dashed"
+        ) + 
+        geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                   colour = "blue",
+                   linetype = "dashed"
+        ) + 
+        labs(x = "Date", y = "New Cases per million cap (7-day average)") + 
+        theme_bw()
+    }else{
+      selected_data() %>% 
+        ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap, col = full_name)) + 
+        geom_line() + 
+        scale_color_brewer(type = "div", palette = "Set1") + 
+        geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                   colour = "red",
+                   linetype = "dashed"
+        ) + 
+        geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                   colour = "blue",
+                   linetype = "dashed"
+        ) + 
+        labs(x = "Date", y = "New Cases per million cap (7-day average)", col = "County") + 
+        theme_bw()
+    }
     
-
-    
+  })
+  output$line_plot <- p1
+  
+  output$rally_info <- renderText({
+    if(rally_num() == 1){
+      paste0("There was 1 rally in ", 
+             selected_data()$county_name[which(selected_data()$rally_ind == 1)][1],
+             ". The red dash line indicates the date of this rally.")
+    }else{
+      paste0("There were ", 
+             rally_num(),
+             " rallies in ", 
+             selected_data()$county_name[which(selected_data()$rally_ind == 1)][1],
+             ". The red/blue dash line indicate the date of the first/second rally.")
+    }
+  })
 }   # Closing  server
 
 
