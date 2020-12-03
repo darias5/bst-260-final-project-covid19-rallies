@@ -8,8 +8,8 @@
 ##########################################
 
 
-path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-#path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies"
+#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -81,8 +81,8 @@ df <- cases %>%
 rm(cases, deaths)
 
 ## Step 1d: Load US Census Data - By Race
-load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
-#load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
+#load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
+load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 
 racial_demographics <- cc %>%
     rename_all(.funs = tolower) %>%
@@ -238,36 +238,79 @@ ui <- fluidPage(
   theme = shinythemes::shinytheme("flatly"),
   
   tabsetPanel(
-    ##  Tab for line plot
-    tabPanel(
-      "Line Plot",
-      
-      ##  Title Panel
-      titlePanel("New Cases on 7-day Average per million capita"),
-      ##  Sidebar 
-      sidebarLayout(
-        ##  "Buttons"
-        sidebarPanel(
-          selectInput(
-            inputId = "chosen_rally_county",
-            label = "Please specify a county with rally",
-            choices = unique(df[which(df$rally_ind == 1),]$full_name)
+    
+    ##  Tab: Bar plot, specific on rally
+    {
+      tabPanel(
+        "Rally-related", 
+        
+        ##  Title Panel
+        titlePanel("3 Weeks Before and After rallies"),
+        ##  Sidebar 
+        sidebarLayout(
+          ##  "Buttons"
+          sidebarPanel(
+            selectInput(
+              inputId = "chosen_county_rally",
+              label = "Please specify a county with rally",
+              choices = unique(df[which(df$rally_ind == 1),]$full_name)
+            ),
+            radioButtons(
+              inputId = "y_type_rally",
+              label = "The data shown would be:",
+              choiceNames = c("New cases", 
+                              "New death"),
+              choiceValues = c(1, 2),
+              selected = 1
+            )
           ),
-          selectizeInput(
-            inputId = "chosen_county",
-            label = "Or, choose counties you wanted",
-            choices = unique(df$full_name)[order(unique(df$full_name))],
-            multiple = T,
-            options = list(maxItems = 3)
+          mainPanel(
+            plotOutput("box_plot_rally")
           )
-        ),
-        ##  Main panel
-        mainPanel(
-          plotOutput("line_plot"),
-          textOutput("rally_info")
         )
       )
-    ),
+    },
+    
+    ##  Tab: Summary line plot, capable of many thing
+    {
+      tabPanel(
+        "Summary",
+        
+        ##  Title Panel
+        titlePanel("New Cases on 7-day Average per million capita"),
+        ##  Sidebar 
+        sidebarLayout(
+          ##  "Buttons"
+          sidebarPanel(
+            selectInput(
+              inputId = "chosen_rally_county_summary",
+              label = "Please specify a county with rally",
+              choices = unique(df[which(df$rally_ind == 1),]$full_name)
+            ),
+            selectizeInput(
+              inputId = "chosen_county_summary",
+              label = "Or, choose counties you wanted",
+              choices = unique(df$full_name)[order(unique(df$full_name))],
+              multiple = T,
+              options = list(maxItems = 3)
+            ),
+            radioButtons(
+              inputId = "y_type_summary",
+              label = "The data shown would be:",
+              choiceNames = c("New cases", 
+                              "New death"),
+              choiceValues = c(1, 2),
+              selected = 1
+            )
+          ),
+          ##  Main panel
+          mainPanel(
+            plotOutput("line_plot"),
+            textOutput("rally_info")
+          )
+        )
+      )
+    },
     
     ##  Tab for other plot, spatial etc.
     tabPanel(
@@ -284,82 +327,170 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  
-  selected_data <- reactive({
-    if(is.null(input$chosen_county)){
+  ##  Server for rally-related tab
+  {
+    ##  Fetch chosen data
+    rally_county_data <- reactive({
       df %>% 
-        filter(full_name == input$chosen_rally_county) %>%
+        filter(rally_ind == 1) %>%
+        filter(full_name == input$chosen_county_rally) %>%
         select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
-        distinct()
-    }else{
-      df %>% 
-        filter(full_name %in% c(input$chosen_rally_county, 
-                                     input$chosen_county)) %>%
-        select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
-        distinct()
-    }
-  })
-  
-  rally_num <- reactive(
-    sum(selected_data()$day_to_rally_1 == 0, na.rm = T) + 
-    sum(selected_data()$day_to_rally_2 == 0, na.rm = T)
-  )
-  
-  rally_1_date <- reactive(selected_data() %>% 
-                             ungroup() %>% 
-                             filter(day_to_rally_1 == 0) %>% select(date))
-  rally_2_date <- reactive(selected_data() %>% 
-                             ungroup() %>% 
-                             filter(day_to_rally_2 == 0) %>% select(date))
-  
-  p1 <- renderPlot({
-    if(is.null(input$chosen_county)){
-      selected_data() %>% 
-        ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap)) + 
-        geom_line() + 
-        geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
-                   colour = "red",
-                   linetype = "dashed"
-        ) + 
-        geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
-                   colour = "blue",
-                   linetype = "dashed"
-        ) + 
-        labs(x = "Date", y = "New Cases per million cap (7-day average)") + 
-        theme_bw()
-    }else{
-      selected_data() %>% 
-        ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap, col = full_name)) + 
-        geom_line() + 
-        scale_color_brewer(type = "div", palette = "Set1") + 
-        geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
-                   colour = "red",
-                   linetype = "dashed"
-        ) + 
-        geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
-                   colour = "blue",
-                   linetype = "dashed"
-        ) + 
-        labs(x = "Date", y = "New Cases per million cap (7-day average)", col = "County") + 
-        theme_bw()
-    }
+        distinct() %>%
+        filter(day_to_rally_1 %in% -21:21) %>%
+        group_by(day_to_rally_1)
+    })
     
-  })
-  output$line_plot <- p1
+    ##  Plot part
+    ### aes(weight = ...) to add weight
+    output$box_plot_rally <- renderPlot({
+      if(input$y_type_rally == 1){
+        rally_county_data() %>%
+          ggplot(aes(x = as.factor(day_to_rally_1), 
+                     y = new_cases_7dayavg_per_mil_cap)) +
+          geom_col() + 
+          geom_vline(aes(xintercept = factor(0)),
+                     colour = "red",
+                     linetype = "dashed") + 
+          labs(x = "Day to Rally", y = "New Cases per million cap (7-day average)") + 
+          theme_bw()
+      }
+      else{
+        rally_county_data() %>%
+          ggplot(aes(x = as.factor(day_to_rally_1), 
+                     y = new_deaths_7dayavg_per_mil_cap)) +
+          geom_col() + 
+          geom_vline(aes(xintercept = factor(0)),
+                     colour = "red",
+                     linetype = "dashed") + 
+          labs(x = "Day to Rally", y = "New Deaths per million cap (7-day average)") + 
+          theme_bw()
+      }
+    })
+  }
   
-  output$rally_info <- renderText({
-    if(rally_num() == 1){
-      paste0("There was 1 rally in ", 
-             selected_data()$county_name[which(selected_data()$rally_ind == 1)][1],
-             ". The red dash line indicates the date of this rally.")
-    }else{
-      paste0("There were ", 
-             rally_num(),
-             " rallies in ", 
-             selected_data()$county_name[which(selected_data()$rally_ind == 1)][1],
-             ". The red/blue dash line indicate the date of the first/second rally.")
-    }
-  })
+  
+  ##  Server for summary tab
+  {  
+    ##  Fetch chosen data; support 2 types
+    selected_lineplot_data <- reactive({
+      ##  only 1 rally-county chosen
+      if(is.null(input$chosen_county_summary)){
+        df %>% 
+          filter(full_name == input$chosen_rally_county_summary) %>%
+          select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
+          distinct()
+      }
+      ##  > 1 county, used for comparison
+      else{
+        df %>% 
+          filter(full_name %in% c(input$chosen_rally_county_summary, 
+                                  input$chosen_county_summary)) %>%
+          select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
+          distinct()
+      }
+    })
+    
+    ##  Numbers of rally 
+    rally_num <- reactive(
+      sum(selected_lineplot_data()$day_to_rally_1 == 0, na.rm = T) + 
+        sum(selected_lineplot_data()$day_to_rally_2 == 0, na.rm = T)
+    )
+    
+    ##  Rally dates
+    rally_1_date <- reactive(selected_lineplot_data() %>% 
+                               ungroup() %>% 
+                               filter(day_to_rally_1 == 0) %>% select(date))
+    rally_2_date <- reactive(selected_lineplot_data() %>% 
+                               ungroup() %>% 
+                               filter(day_to_rally_2 == 0) %>% select(date))
+    ##  Plot part; 
+    p1 <- renderPlot({
+      if(is.null(input$chosen_county_summary)){
+        if(input$y_type_summary == 1){
+          selected_lineplot_data() %>% 
+            ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap)) + 
+            geom_line() + 
+            geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                       colour = "red",
+                       linetype = "dashed"
+            ) + 
+            geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                       colour = "blue",
+                       linetype = "dashed"
+            ) + 
+            labs(x = "Date", y = "New Cases per million cap (7-day average)") + 
+            theme_bw()
+        }
+        else{
+          selected_lineplot_data() %>% 
+            ggplot(aes(x = date, y = new_deaths_7dayavg_per_mil_cap)) + 
+            geom_line() + 
+            geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                       colour = "red",
+                       linetype = "dashed"
+            ) + 
+            geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                       colour = "blue",
+                       linetype = "dashed"
+            ) + 
+            labs(x = "Date", y = "New Deaths per million cap (7-day average)") + 
+            theme_bw()
+        }
+      }
+      else{
+        if(input$y_type_summary == 1){
+          selected_lineplot_data() %>% 
+            ggplot(aes(x = date, y = new_cases_7dayavg_per_mil_cap, col = full_name)) + 
+            geom_line() + 
+            scale_color_brewer(type = "div", palette = "Set1") + 
+            geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                       colour = "red",
+                       linetype = "dashed"
+            ) + 
+            geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                       colour = "blue",
+                       linetype = "dashed"
+            ) + 
+            labs(x = "Date", y = "New Cases per million cap (7-day average)", col = "County") + 
+            theme_bw()
+        }
+        else{
+          selected_lineplot_data() %>% 
+            ggplot(aes(x = date, y = new_deaths_7dayavg_per_mil_cap, col = full_name)) + 
+            geom_line() + 
+            scale_color_brewer(type = "div", palette = "Set1") + 
+            geom_vline(aes(xintercept = max(rally_1_date()[[1]], 0)),
+                       colour = "red",
+                       linetype = "dashed"
+            ) + 
+            geom_vline(aes(xintercept = max(rally_2_date()[[1]], 0)),
+                       colour = "blue",
+                       linetype = "dashed"
+            ) + 
+            labs(x = "Date", y = "New Deaths per million cap (7-day average)", col = "County") + 
+            theme_bw()
+        }
+      }
+    })
+    output$line_plot <- p1
+    
+    ##  Text output
+    output$rally_info <- renderText({
+      if(rally_num() == 1){
+        paste0("There was 1 rally in ", 
+               selected_lineplot_data()$county_name[which(selected_lineplot_data()$rally_ind == 1)][1],
+               ". The red dash line indicates the date of this rally.")
+      }else{
+        paste0("There were ", 
+               rally_num(),
+               " rallies in ", 
+               selected_lineplot_data()$county_name[which(selected_lineplot_data()$rally_ind == 1)][1],
+               ". The red/blue dash line indicate the date of the first/second rally.")
+      }
+    })
+  }
+  
+  
 }   # Closing  server
 
 
