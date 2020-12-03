@@ -374,6 +374,7 @@ df %>% filter(date == "2020-08-01") %>%
 
 ```{R}
 
+
 rally <- df %>% filter(rally_ind==1)
 
 df_singledata <- df %>% filter(date == "2020-08-01") 
@@ -400,7 +401,6 @@ df_singledata %>%
                                limits = c(0,150),    # Forcing upper limit of 150 cases per day
                                oob = scales::squish)+ # Letting values out of bounds be squished to scale
   geom_point(data=rally_singledata, aes(x=long, y=lat), color="red", alpha=0.5)
-
 ```
 
 
