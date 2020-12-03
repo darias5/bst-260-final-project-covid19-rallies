@@ -213,7 +213,6 @@ df <- df %>%
 
 
 ```{R}
-# ADD RALLY DATA HERE -- COULD FOLKS DO THE FOLLOWING
 # Add code to load in rally csv
 
 rally_data <- read_xlsx("../data/rallies_cc_da.xlsx") 
