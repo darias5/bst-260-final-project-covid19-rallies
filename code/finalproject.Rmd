@@ -93,6 +93,10 @@ df <- cases %>%
 
 rm(cases, deaths)
 
+```
+
+```{r}
+
 ## Step 1d: Load US Census Data - By Race
 #load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
@@ -123,7 +127,8 @@ age_demographics <- cc %>%
          total_pop = tot_pop) %>%
   group_by(state_fips, county_fips) %>%
   summarise(senior_pop = sum(total_pop))
-  
+rm(cc)
+
 ## Step 1f: Merge Demographic Info with Case and Death Counts
 df <- df %>%
   left_join(racial_demographics, by=c('state_fips','county_fips')) %>%
@@ -157,7 +162,7 @@ df <- df %>%
   left_join(income, by = c('state_name','county_name_long'))
 
 rm(income)
-rm(cc)
+
 ```
 
 ## Step 2: Summary Statistics and visualizations
@@ -252,16 +257,15 @@ us_map = map_data("county")
 fips <- data.frame(county.fips)
 us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
 us_map <- full_join(fips, us_map, by = "polyname")
+rm(fips)
 
 ```
 
 
 ```{R}
 # Merging map data into dataframe
-
 df <- full_join(df, us_map, by = c("fips"))
 rm(us_map)
-rm(fips)
 
 ```
 
@@ -352,7 +356,7 @@ df %>% filter(date == "2020-08-01") %>%
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
 df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = total_pop)) +
+   ggplot(aes(x = long, y = lat, group = group, fill = population)) +
       geom_polygon() + 
       theme(panel.grid.major = element_blank(), 
             panel.background = element_blank(),
@@ -371,9 +375,9 @@ df %>% filter(date == "2020-08-01") %>%
 
 ```{R}
 
-df %>%   filter(rally_ind == 1) %>%  filter(abs(day_to_rally)<=21) %>%
-  ggplot(day_to_rally, new_deaths_7dayavg_per_mil_cap, color = fips) +
-  geom_line()
+#df %>%   filter(rally_ind == 1) %>%  filter(abs(day_to_rally)<=21) %>%
+#  ggplot(day_to_rally, new_deaths_7dayavg_per_mil_cap, color = fips) +
+#  geom_line()
 
 
 ```
