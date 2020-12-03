@@ -368,6 +368,39 @@ df %>% filter(date == "2020-08-01") %>%
    scale_fill_viridis_c(option = "plasma",
                                limits = c(0,1000000),    # Forcing upper limit of 1,000,000 pop
                                oob = scales::squish) # Letting values out of bounds be squished to scale
+
+
+```
+
+```{R}
+
+rally <- df %>% filter(rally_ind==1)
+
+df_singledata <- df %>% filter(date == "2020-08-01") 
+rally_singledata <- rally %>% filter(date <= "2020-08-01") 
+  
+```
+
+```{r}
+
+df_singledata %>%
+  ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg)) +
+  geom_polygon() + 
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 cases",
+        subtitle="on October 1, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+    scale_color_continuous(low = "white", high = "red",
+                               limits = c(0,150),    # Forcing upper limit of 150 cases per day
+                               oob = scales::squish)+ # Letting values out of bounds be squished to scale
+  geom_point(data=rally_singledata, aes(x=long, y=lat), color="red", alpha=0.5)
+
 ```
 
 
@@ -383,7 +416,5 @@ df %>% filter(date == "2020-08-01") %>%
 
 ```{R}
 
-# Code for adding circles that identify where rallies were located
-# geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
 
 ```
