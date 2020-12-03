@@ -8,8 +8,8 @@
 ##########################################
 
 
+path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
 #path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -189,10 +189,12 @@ ui <- fluidPage(
         sidebarLayout(
           ##  "Buttons"
           sidebarPanel(
-            selectInput(
+            selectizeInput(
               inputId = "chosen_county_rally",
-              label = "Please specify a county with rally",
-              choices = unique(df[which(df$rally_ind == 1),]$full_name)
+              label = "Please specify counties with rally",
+              choices = unique(df[which(df$rally_ind == 1),]$full_name),
+              multiple = T,
+              options = list(maxItems = 5)
             ),
             radioButtons(
               inputId = "y_type_rally",
@@ -272,7 +274,7 @@ server <- function(input, output) {
     rally_county_data <- reactive({
       df %>% 
         filter(rally_ind == 1) %>%
-        filter(full_name == input$chosen_county_rally) %>%
+        filter(full_name %in% input$chosen_county_rally) %>%
         select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
         distinct() %>%
         filter(day_to_rally_1 %in% -21:21) %>%
@@ -284,24 +286,32 @@ server <- function(input, output) {
     output$box_plot_rally <- renderPlot({
       if(input$y_type_rally == 1){
         rally_county_data() %>%
-          ggplot(aes(x = as.factor(day_to_rally_1), 
-                     y = new_cases_7dayavg_per_mil_cap)) +
-          geom_col() + 
-          geom_vline(aes(xintercept = factor(0)),
+          ggplot(aes(x = day_to_rally_1,
+                     y = new_cases_7dayavg_per_mil_cap,
+                     col = full_name)) +
+          scale_color_brewer(type = "div", palette = "Set1") + 
+          geom_line() +
+          geom_vline(aes(xintercept = 0),
                      colour = "red",
-                     linetype = "dashed") + 
-          labs(x = "Day to Rally", y = "New Cases per million cap (7-day average)") + 
+                     linetype = "dashed") +
+          labs(x = "Day to Rally", 
+               y = "New Cases per million cap (7-day average)",
+               col = "County") +
           theme_bw()
       }
       else{
         rally_county_data() %>%
-          ggplot(aes(x = as.factor(day_to_rally_1), 
-                     y = new_deaths_7dayavg_per_mil_cap)) +
-          geom_col() + 
-          geom_vline(aes(xintercept = factor(0)),
+          ggplot(aes(x = day_to_rally_1, 
+                     y = new_deaths_7dayavg_per_mil_cap,
+                     col = full_name)) +
+          scale_color_brewer(type = "div", palette = "Set1") + 
+          geom_line() +  
+          geom_vline(aes(xintercept = 0),
                      colour = "red",
                      linetype = "dashed") + 
-          labs(x = "Day to Rally", y = "New Deaths per million cap (7-day average)") + 
+          labs(x = "Day to Rally",
+               y = "New Deaths per million cap (7-day average)",
+               col = "County") + 
           theme_bw()
       }
     })

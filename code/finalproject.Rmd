@@ -411,6 +411,15 @@ df_singledata %>%
 #  ggplot(day_to_rally, new_deaths_7dayavg_per_mil_cap, color = fips) +
 #  geom_line()
 
+df %>%
+  select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
+  distinct() %>%
+  filter(rally_ind == 1) %>%  
+  filter(abs(day_to_rally_1) <= 21) %>%
+  ggplot(aes(x = day_to_rally_1, y = new_deaths_7dayavg_per_mil_cap, color = as.factor(fips))) +
+  geom_line() + 
+  theme_bw()
+
 
 ```
 
