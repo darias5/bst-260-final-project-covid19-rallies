@@ -33,13 +33,9 @@ library(readxl)
 
 
 ## Directory and file paths 
-#path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies"
-path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
-
-
-
 
 ```
 
@@ -90,16 +86,9 @@ deaths <- read_csv(file = file.path(datapath,"time_series_covid19_deaths_US.csv"
 df <- cases %>%
   left_join(deaths, by = c('fips','date')) %>%
   arrange(fips, date)
-
 rm(cases, deaths)
 
-```
-
-```{r}
-
 ## Step 1d: Load US Census Data - By Race
-#load("/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
-load("~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/data/cc-est2019-alldata.RData")
 
 racial_demographics <- cc %>%
   rename_all(.funs = tolower) %>%
@@ -127,8 +116,7 @@ age_demographics <- cc %>%
          total_pop = tot_pop) %>%
   group_by(state_fips, county_fips) %>%
   summarise(senior_pop = sum(total_pop))
-rm(cc)
-
+  
 ## Step 1f: Merge Demographic Info with Case and Death Counts
 df <- df %>%
   left_join(racial_demographics, by=c('state_fips','county_fips')) %>%
@@ -143,8 +131,6 @@ mobility <- read_csv(file = file.path(datapath,"DL-us-mobility-daterow.csv")) %>
   drop_na(admin1) %>%
   drop_na(admin2) %>%
   select(date, fips, m_samples = samples, m50, m50_index) 
-
-df <- df %>% filter(date > ymd(200226))
 
 ## Step 1h: Merge Mobility Info with Full Dataset
 df <- df %>%
@@ -162,7 +148,7 @@ df <- df %>%
   left_join(income, by = c('state_name','county_name_long'))
 
 rm(income)
-
+rm(cc)
 ```
 
 ## Step 2: Summary Statistics and visualizations
@@ -193,9 +179,8 @@ df <- df %>%
 
 ######### DEATHS
 
-# Creating a variable that contains the number of new confirmed cases
-df <- df %>% 
-  arrange(date) %>% 
+# Creating a variable that contains the number of deaths
+  df <- df %>% arrange(date) %>% 
   group_by(fips)  %>% 
   mutate(new_deaths = deaths - lag(deaths))
 
@@ -213,11 +198,12 @@ df <- df %>%
 
 
 ```{R}
+# ADD RALLY DATA HERE -- COULD FOLKS DO THE FOLLOWING
 # Add code to load in rally csv
+library(readxl)
+rally_data <- read_excel("bst-260-final-project-covid19-rallies/data/rallies_cc_da.xlsx")
 
-rally_data <- read_xlsx("../data/rallies_cc_da.xlsx") 
 rally_data$date <- as.Date(rally_data$date)
-
 # Filter out rallies that predate February 26, 2020 (first community spread in February 26)
 rally_data <- rally_data %>%
   filter(date > ymd(200226)) %>%
@@ -229,23 +215,45 @@ rally_data <- rally_data %>%
 
 df <- df %>%
   full_join(rally_data, by = c("fips", "date")) %>%
-  group_by(fips) %>%
-  mutate(rally_ind = ifelse(sum(rally, na.rm = T) != 0, 1, 0))
+  mutate(rally_ind = ifelse(is.na(rally), 0, 1))
+df$rally <- NULL
 
-
-temp <- df %>%
-  group_by(fips) %>%
-  filter(sum(rally, na.rm = T) != 0) %>%
-  mutate(day_to_rally_1 = date - date[which(rally == 1)][1]) %>%
-  mutate(day_to_rally_2 = date - date[which(rally == 1)][2]) %>%
-  select(date, fips, day_to_rally_1, day_to_rally_2)
+temp <- df %>% 
+  group_by(fips) %>% 
+  filter(sum(rally_ind) != 0) %>%
+  mutate(day_to_rally = date - date[which(rally_ind == 1)]) %>%
+  select(date, fips, day_to_rally)
 
 df <- df %>%
   full_join(temp, by = c("fips", "date"))
 
-df$rally <- NULL
 rm(temp)
 rm(rally_data)
+# Filter out rallies that predate February 26, 2020 (first community spread in February 26)
+
+# Full join rally and df by fips
+# Drop unnecessary duplicate columns to save data space
+
+# Drop the rally database using the rm() function after merging (to save memory)
+# Make sure dates of rallies are saved as.date
+# Create a binary indicator (1,0) for whether the county held a rally (on any date)
+# Among counties that held a rally, create a variable which is the number of days before and after a rally
+
+  # You can use the date between function (e.g., if a rally happens on Oct. 10, the value for this variable for a given county on Oct. 9 should be -1.
+  # For October 11, it should be 1). This variable will be the x axis that we can use to plot all rally counties together (we are centering them by the 
+  # date of the ralies)
+
+
+```
+```{r}
+land_area <- read_excel(file = file.path(datapath,"Land area by counties.xlsx"))
+
+
+land_area$fips <- as.numeric(land_area$fips)
+
+
+#Merging land area in Km and creating density variable
+df <- df %>% left_join(land_area[,c(2,3)],by="fips") %>% mutate(density = population/land_area)
 
 ```
 
@@ -256,15 +264,16 @@ us_map = map_data("county")
 fips <- data.frame(county.fips)
 us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
 us_map <- full_join(fips, us_map, by = "polyname")
-rm(fips)
 
 ```
 
 
 ```{R}
 # Merging map data into dataframe
+
 df <- full_join(df, us_map, by = c("fips"))
 rm(us_map)
+rm(fips)
 
 ```
 
@@ -355,7 +364,7 @@ df %>% filter(date == "2020-08-01") %>%
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
 df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = population)) +
+   ggplot(aes(x = long, y = lat, group = group, fill = total_pop)) +
       geom_polygon() + 
       theme(panel.grid.major = element_blank(), 
             panel.background = element_blank(),
@@ -368,62 +377,26 @@ df %>% filter(date == "2020-08-01") %>%
    scale_fill_viridis_c(option = "plasma",
                                limits = c(0,1000000),    # Forcing upper limit of 1,000,000 pop
                                oob = scales::squish) # Letting values out of bounds be squished to scale
-
-
 ```
 
 ```{R}
 
+# Code for adding circles that identify where rallies were located
+# geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
 
-rally <- df %>% filter(rally_ind==1)
-
-df_singledata <- df %>% filter(date == "2020-08-01") 
-rally_singledata <- rally %>% filter(date <= "2020-08-01") 
-  
 ```
-
 ```{r}
 
-df_singledata %>%
-  ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg)) +
-  geom_polygon() + 
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of new confirmed COVID-19 cases",
-        subtitle="on October 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Rolling 7-day average") +
-    scale_color_continuous(low = "white", high = "red",
-                               limits = c(0,150),    # Forcing upper limit of 150 cases per day
-                               oob = scales::squish)+ # Letting values out of bounds be squished to scale
-  geom_point(data=rally_singledata, aes(x=long, y=lat), color="red", alpha=0.5)
+## Propensity score matching
+
+
+fit <- glm(rally_ind ~ median_inc + density ,data=df)
+
+summary(fit)
+
+df$score <- predict(fit, df)
+
+
+# we do not have median income for some counties that had rallies
 ```
 
-
-
-```{R}
-
-#df %>%   filter(rally_ind == 1) %>%  filter(abs(day_to_rally)<=21) %>%
-#  ggplot(day_to_rally, new_deaths_7dayavg_per_mil_cap, color = fips) +
-#  geom_line()
-
-df %>%
-  select(-polyname, -long, -lat, -group, -order, -region, -subregion) %>%
-  distinct() %>%
-  filter(rally_ind == 1) %>%  
-  filter(abs(day_to_rally_1) <= 21) %>%
-  ggplot(aes(x = day_to_rally_1, y = new_deaths_7dayavg_per_mil_cap, color = as.factor(fips))) +
-  geom_line() + 
-  theme_bw()
-
-
-```
-
-```{R}
-
-
-```
