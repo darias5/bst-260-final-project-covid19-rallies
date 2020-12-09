@@ -157,6 +157,14 @@ df$rally <- NULL
 rm(temp)
 rm(rally_data)
 
+# Merging land area in Km and creating density variable
+land_area <- read_excel(path = file.path(datapath,"Land area by counties.xlsx"))
+land_area$fips <- as.numeric(land_area$STCOU)
+df <- df %>% 
+  left_join(land_area[,c(3,4)], by="fips") %>% 
+  mutate(density = population/LND110200D)
+rm(land_area)
+
 # Downloading map data
 us_map = map_data("county")
 fips <- data.frame(county.fips)

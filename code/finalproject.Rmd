@@ -33,7 +33,9 @@ library(readxl)
 
 
 ## Directory and file paths 
-path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
+#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+#path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
+path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -200,10 +202,9 @@ df <- df %>%
 ```{R}
 # ADD RALLY DATA HERE -- COULD FOLKS DO THE FOLLOWING
 # Add code to load in rally csv
-library(readxl)
-rally_data <- read_excel("bst-260-final-project-covid19-rallies/data/rallies_cc_da.xlsx")
-
+rally_data <- read_xlsx("../data/rallies_cc_da.xlsx") 
 rally_data$date <- as.Date(rally_data$date)
+
 # Filter out rallies that predate February 26, 2020 (first community spread in February 26)
 rally_data <- rally_data %>%
   filter(date > ymd(200226)) %>%
@@ -215,47 +216,74 @@ rally_data <- rally_data %>%
 
 df <- df %>%
   full_join(rally_data, by = c("fips", "date")) %>%
-  mutate(rally_ind = ifelse(is.na(rally), 0, 1))
-df$rally <- NULL
+  group_by(fips) %>%
+  mutate(rally_ind = ifelse(sum(rally, na.rm = T) != 0, 1, 0))
 
-temp <- df %>% 
-  group_by(fips) %>% 
-  filter(sum(rally_ind) != 0) %>%
-  mutate(day_to_rally = date - date[which(rally_ind == 1)]) %>%
-  select(date, fips, day_to_rally)
+temp <- df %>%
+  group_by(fips) %>%
+  filter(sum(rally, na.rm = T) != 0) %>%
+  mutate(day_to_rally_1 = date - date[which(rally == 1)][1]) %>%
+  mutate(day_to_rally_2 = date - date[which(rally == 1)][2]) %>%
+  select(date, fips, day_to_rally_1, day_to_rally_2)
 
 df <- df %>%
   full_join(temp, by = c("fips", "date"))
 
+df$rally <- NULL
 rm(temp)
 rm(rally_data)
-# Filter out rallies that predate February 26, 2020 (first community spread in February 26)
-
-# Full join rally and df by fips
-# Drop unnecessary duplicate columns to save data space
-
-# Drop the rally database using the rm() function after merging (to save memory)
-# Make sure dates of rallies are saved as.date
-# Create a binary indicator (1,0) for whether the county held a rally (on any date)
-# Among counties that held a rally, create a variable which is the number of days before and after a rally
-
-  # You can use the date between function (e.g., if a rally happens on Oct. 10, the value for this variable for a given county on Oct. 9 should be -1.
-  # For October 11, it should be 1). This variable will be the x axis that we can use to plot all rally counties together (we are centering them by the 
-  # date of the ralies)
-
-
 ```
+
 ```{r}
-land_area <- read_excel(file = file.path(datapath,"Land area by counties.xlsx"))
-
-
-land_area$fips <- as.numeric(land_area$fips)
-
+land_area <- read_excel(path = file.path(datapath,"Land area by counties.xlsx"))
+land_area$fips <- as.numeric(land_area$STCOU)
 
 #Merging land area in Km and creating density variable
-df <- df %>% left_join(land_area[,c(2,3)],by="fips") %>% mutate(density = population/land_area)
-
+df <- df %>% 
+  left_join(land_area[,c(3,4)], by="fips") %>% 
+  mutate(density = population/LND110200D)
+rm(land_area)
 ```
+
+```{r}
+# Boxplot based weighted on population density
+p1 <- df %>%
+  filter(rally_ind == 1) %>%
+  filter(day_to_rally_1 %in% -21:21) %>%
+  group_by(day_to_rally_1) %>%
+  mutate(mean_cases = mean(new_cases_7dayavg_per_mil_cap, na.rm = T)) %>%
+  ggplot(aes(x = factor(day_to_rally_1),
+             y = new_cases_7dayavg_per_mil_cap
+             )) +
+  geom_boxplot(fill = 'grey') +
+  geom_vline(aes(xintercept = factor(0)),
+                 colour = "red",
+                 linetype = "dashed") +
+  labs(x = "Day to Rally", 
+       y = "New Cases per million cap (7-day average)") +
+  theme_bw()
+
+# Lineplot for the median weighted on population density
+p2 <- df %>%
+  filter(rally_ind == 1) %>% # counties with rallies
+  filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
+  group_by(day_to_rally_1) %>%
+  mutate(mean_cases = weighted.mean(new_cases_7dayavg_per_mil_cap, density, na.rm = T)) %>% # weighted on population density
+  select(day_to_rally_1, mean_cases) %>% 
+  distinct() %>%
+  ggplot(aes(x = as.numeric(day_to_rally_1),
+             y = mean_cases)) +
+  geom_line() +
+  geom_vline(aes(xintercept = 0),
+                 colour = "red",
+                 linetype = "dashed") + 
+  labs(x = "Day to Rally", 
+       y = "New Cases per million cap (7-day average)") +
+  theme_bw()
+p1
+p2
+```
+
 
 ```{R}
 
