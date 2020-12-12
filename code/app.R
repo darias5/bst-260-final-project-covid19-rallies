@@ -166,8 +166,11 @@ df <- df %>%
 rm(land_area)
 
 # Downloading map data
-us_map = map_data("county")
+us_map <- map_data("county")
 fips <- data.frame(county.fips)
+us_map$subregion[(us_map$subregion == "shannon") & (us_map$region == "south dakota")] <- "ogala lakota"
+fips$fips[which(fips$fips == 46113)] <- 46102
+fips$polyname[which(fips$fips == 46102)] <- "south dakota,ogala lakota"
 us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
 us_map <- full_join(fips, us_map, by = "polyname")
 rm(fips)
