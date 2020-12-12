@@ -410,7 +410,7 @@ p1 <- df %>%
        y = "Rolling 7-day average") +
   theme_bw()
 
-# Step 6b: Lineplot of new cases for the median weighted on population density
+# Step 6b: Lineplot of new cases for the mean weighted on population density
 
 p2 <- df %>%
   filter(rally_ind == 1) %>% # counties with rallies
@@ -426,7 +426,7 @@ p2 <- df %>%
                  colour = "red",
                  linetype = "dashed") + 
   labs(title="Number of new confirmed COVID-19 cases per million people",
-         subtitle = "Median weighted on population density",
+         subtitle = "Mean weighted on population density",
     x = "Days until/after rally", 
        y = "Rolling 7-day average") +
   theme_bw()
@@ -451,7 +451,7 @@ p3 <- df %>%
        y = "Rolling 7-day average") +
   theme_bw()
 
-# Step 6d: Lineplot of new deaths for the median weighted on population density
+# Step 6d: Lineplot of new deaths for the mean weighted on population density
 
 p4 <- df %>%
   filter(rally_ind == 1) %>% # counties with rallies
@@ -467,7 +467,7 @@ p4 <- df %>%
                  colour = "red",
                  linetype = "dashed") + 
   labs(title="Number of new confirmed COVID-19 deaths per million people",
-  subtitle = "Median weighted on population density",
+  subtitle = "Mean weighted on population density",
     x = "Days until/after rally", 
        y = "Rolling 7-day average") + ylim(0,4) +
   theme_bw()
@@ -512,11 +512,71 @@ summary(county_match)
 dim(dta_m)
 
 dta_m <- dta_m  %>% select(fips, subclass)
-dta_m <- inner_join(dta_m, df, by = c("fips"))
+dta_m_1 <- inner_join(dta_m, df, by = c("fips"))
 
 
+dta_m_2 <- dta_m_1  %>% select(day_to_rally_1, subclass, rally_ind, date)
+dta_m_3 <- dta_m_2  %>% filter(rally_ind == 1)
 
 
+dta_m_3 <- dta_m_3  %>% distinct()
+dta_m_3 <- dta_m_3  %>% select(day_to_rally_1, subclass, date)
+dta_m_1 <- dta_m_1 %>% select(c(1:18))%>% distinct()
+
+dta_m <- full_join(dta_m_3, dta_m_1, by = c("subclass", "date"))
+
+rm(dta_m_1)
+rm(dta_m_2)
+rm(dta_m_3)
 
 ```
+
+
+Step 8: Mean-centered graphs of COVID-19 cases among counties with rallies vs. without
+
+```{r}
+# Step 8a:  Lineplot of new cases for the mean weighted on population density in case vs. control counties
+
+p5 <- dta_m %>%
+  filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
+  group_by(day_to_rally_1) %>%
+    group_by(rally_ind) %>%
+  mutate(mean_cases = weighted.mean(new_cases_7dayavg_per_mil_cap, density, na.rm = T)) %>% # weighted on population density
+  select(rally_ind, day_to_rally_1, mean_cases) %>% 
+  distinct() %>%
+  ggplot(aes(x = as.numeric(day_to_rally_1),
+             y = mean_cases,
+             group = rally_ind)) +
+  geom_line() +
+  geom_vline(aes(xintercept = 0),
+                 colour = "red",
+                 linetype = "dashed") + 
+  labs(title="Number of new confirmed COVID-19 cases per million people",
+         subtitle = "Mean weighted on population density",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") +
+  theme_bw()
+
+p5
+
+# Step 8b:  Lineplot of new cases, case vs. control counties
+
+p6 <- dta_m %>%
+  filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
+  select(rally_ind, day_to_rally_1, new_cases_7dayavg_per_mil_cap) %>% 
+  distinct() %>%
+  ggplot(aes(x = as.numeric(day_to_rally_1),
+             y = new_cases_7dayavg_per_mil_cap,
+             group = rally_ind)) +
+  geom_line() +
+  geom_vline(aes(xintercept = 0),
+                 colour = "red",
+                 linetype = "dashed") + 
+  labs(title="Number of new confirmed COVID-19 cases per million people",
+         subtitle = "Counties with rallies and matched control counties",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") +
+  theme_bw()
+
+p6
 
