@@ -383,7 +383,9 @@ map_7 <- df_singledata %>%
                           limits = c(0,5),    # Forcing upper limit of 1 thousand cumulative cases per million capita 
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
+rm(df_singledata)
 map_7
+
 
 ```
 
@@ -517,10 +519,10 @@ dta_m_1 <- inner_join(dta_m, df, by = c("fips"))
 
 dta_m_2 <- dta_m_1  %>% select(day_to_rally_1, subclass, rally_ind, date)
 dta_m_3 <- dta_m_2  %>% filter(rally_ind == 1)
-
-
 dta_m_3 <- dta_m_3  %>% distinct()
 dta_m_3 <- dta_m_3  %>% select(day_to_rally_1, subclass, date)
+
+
 dta_m_1 <- dta_m_1 %>% select(c(1:18))%>% distinct()
 
 dta_m <- full_join(dta_m_3, dta_m_1, by = c("subclass", "date"))
@@ -580,3 +582,4 @@ p6 <- dta_m %>%
 
 p6
 
+```
