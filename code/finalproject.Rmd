@@ -204,7 +204,6 @@ rm(us_map)
 
 Step 4: Descriptive Visual Analysis
 
-
 ```{r}
 
 # Step 4a: Map of population
@@ -309,12 +308,29 @@ map_5 <- df %>% filter(date == "2020-11-03") %>%
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
 
+# Step 4g: Map of median income
+map_6 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = median_inc)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Median income",
+        caption="Source: USDA",
+        fill="Household income, dollars") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,100000),    # Forcing upper limit of 1 million pop
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
 map_0
 map_1
 map_2
 map_3
 map_4
 map_5
+map_6
 ```
 
 Step 5: Map of rally locations, sized by change in cases
@@ -337,7 +353,7 @@ rally <- rally %>% arrange(date) %>%  group_by(fips)  %>%
 rally <- rally %>% filter(!is.na(delta_cases))
 
 # Step 5b: Map of cumulative COVID-19 cases per sq. mile and change in COVID-19 cases before vs. after rallies
-map_6 <- df_singledata %>%
+map_7 <- df_singledata %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group,  fill=cases/land_area), color = "grey") + 
       theme(panel.grid.major = element_blank(), 
@@ -355,7 +371,7 @@ map_6 <- df_singledata %>%
                           limits = c(0,5),    # Forcing upper limit of 1 thousand cumulative cases per million capita 
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
-map_6
+map_7
 
 ```
 
@@ -449,6 +465,7 @@ p1
 p2
 p3
 p4
+
 ```
 
 Step 7: Propensity score matching
