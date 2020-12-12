@@ -30,6 +30,8 @@ library(maps)
 library(viridis)
 library(zoo)
 library(readxl)
+library (MatchIt)
+
 
 ## Directory and file paths 
 #path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
@@ -483,11 +485,37 @@ Step 7: Propensity score matching
 ```{R}
 # Step 7a: Propensity score matching based on median income and population density
 
-fit <- glm(rally_ind ~ median_inc + density ,data=df)
+score <- df %>% select(rally_ind,median_inc,density,fips)
+score <- score %>% distinct()
+score <- score %>% filter(!is.na(median_inc))
+score <- score %>% filter(!is.na(density))
+score <- score %>% filter(!is.infinite(density))
 
+fit <- glm(rally_ind ~ median_inc + density, family="binomial" ,data=score)
 summary(fit)
 
-df$score <- predict(fit, df)
+score$pr_score <- predict(fit, type = "response")
+
+labs <- paste("County type:", c("Rally", "Control"))
+score %>%
+  mutate(rally_ind = ifelse(rally_ind == 1, labs[1], labs[2])) %>%
+  ggplot(aes(x = pr_score)) +
+  geom_histogram(color = "white") +
+  facet_wrap(~rally_ind) +
+  xlab("Probability of being a county with a rally") +
+  theme_bw()
+
+county_match <- matchit(rally_ind ~ median_inc + density , method ="nearest" ,data=score, replace = FALSE, ratio = 5)
+dta_m <- match.data(county_match, subclass = "subclass")
+
+summary(county_match)
+dim(dta_m)
+
+dta_m <- dta_m  %>% select(fips, subclass)
+dta_m <- inner_join(dta_m, df, by = c("fips"))
+
+
+
 
 
 ```
