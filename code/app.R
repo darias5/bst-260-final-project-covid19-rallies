@@ -261,9 +261,35 @@ ui <- fluidPage(
       )
     },
     
-    ##  Tab for other plot, spatial etc.
+    ##  Tab for spaital plot
     tabPanel(
-      "Other Plot"
+      "Spatial Plot",
+      ##  Title Panel
+      titlePanel("Map of COVID-19 data per million people"),
+      
+      sidebarLayout(
+        sidebarPanel(
+          dateInput(
+            inputId = "chosen_date_geo",
+            label = "Please select a date",
+            value = "2020-10-01",
+            min = min(df$date, na.rm = T)+3,
+            max = max(df$date, na.rm = T)-3
+          ),
+          radioButtons(
+            inputId = "y_type_geo",
+            label = "The data shown would be:",
+            choiceNames = c("New cases", 
+                            "New death"),
+            choiceValues = c(1, 2),
+            selected = 1
+          )
+        ),
+        mainPanel(
+          plotOutput("geo_plot")
+        )
+      )
+      
     )
     
   )
@@ -290,7 +316,6 @@ server <- function(input, output) {
     })
     
     ##  Plot part
-    ### aes(weight = ...) to add weight
     output$box_plot_rally <- renderPlot({
       if(input$y_type_rally == 1){
         rally_county_data() %>%
@@ -447,6 +472,44 @@ server <- function(input, output) {
     })
   }
   
+  ##  Server for the geo tab
+  {
+    output$geo_plot <- renderPlot({
+      if(input$y_type_geo == 1){
+        df %>% filter(date == input$chosen_date_geo) %>%
+          ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg_per_mil_cap)) +
+          geom_polygon() + 
+          theme(panel.grid.major = element_blank(), 
+                panel.background = element_blank(),
+                axis.title = element_blank(), 
+                axis.text = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(title="Number of new confirmed COVID-19 cases per million people",
+               subtitle=paste0("on ", format(input$chosen_date_geo, "%B %d, %Y")),
+               caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+               fill="Rolling 7-day average") +
+          scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,500),    # Forcing upper limit of 500 cases per million capita per day
+                               oob = scales::squish)
+      }else{
+        df %>% filter(date == input$chosen_date_geo) %>%
+          ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg_per_mil_cap)) +
+          geom_polygon() + 
+          theme(panel.grid.major = element_blank(), 
+                panel.background = element_blank(),
+                axis.title = element_blank(), 
+                axis.text = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(title="Number of new confirmed COVID-19 deaths per million people",
+               subtitle=paste0("on ", format(input$chosen_date_geo, "%B %d, %Y")),
+               caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+               fill="Rolling 7-day average") +
+          scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,100),    # Forcing upper limit of 100 cases per million capita per day
+                               oob = scales::squish)
+      }
+    })
+  }
   
 }   # Closing  server
 
