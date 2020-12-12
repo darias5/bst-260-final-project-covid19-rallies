@@ -68,6 +68,7 @@ cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.cs
   pivot_longer(contains("/"), names_to = "date", values_to = "cases") %>%
   mutate(date = as.Date(date, "%m/%d/%y"))
 
+
 ## Step 1b: Import Death Dataset 
 deaths <- read_csv(file = file.path(datapath,"time_series_covid19_deaths_US.csv")) %>%
   mutate(fips = as.numeric(FIPS)) %>%
@@ -187,16 +188,25 @@ rm(rally_data)
 
 Step 3: Prepare Map Data
 
+*Note that Shannon County (FIPS 46113) was renamed to Oglala Lakota County (FIPS 46102) as of May 1st, 2015. We therefore replace FIPS code 46113 with the new code 46102.*
+
 ```{r}
 
 # Step 3a: Downloading map data
 us_map = map_data("county")
 fips <- data.frame(county.fips)
+
+# Step 3b: Update the renaming of Shannon County, SD to Ogala Lakota, SD
+us_map$subregion[us_map$region == "south dakota" & us_map$subregion == "shannon"] <- "ogala lakota"
+fips$fips[fips$fips == 46113] <- 46102
+fips$polyname[fips$fips == 46102] <- "south dakota,ogala lakota"
+
+# Step 3c: Merging data 
 us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
 us_map <- full_join(fips, us_map, by = "polyname")
 rm(fips)
 
-# Step 3b: Merging map data into dataframe
+# Step 3d: Merging map data into dataframe
 df <- full_join(df, us_map, by = c("fips"))
 rm(us_map)
 
