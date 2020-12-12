@@ -31,11 +31,11 @@ library(viridis)
 library(zoo)
 library(readxl)
 
-
 ## Directory and file paths 
 #path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
 #path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
-path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
+# path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
+path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -43,7 +43,7 @@ datapath <- paste(path,'data/', sep = "/")
 
 ## Step 1: Prepare COVID-19 Data
 
-```{r Load Data,  include=FALSE}
+```{r}
 
 ## Step 1a: Import Case Dataset 
 cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.csv")) %>%
@@ -90,135 +90,86 @@ df <- cases %>%
   arrange(fips, date)
 rm(cases, deaths)
 
-## Step 1d: Load US Census Data - By Race
+## Step 1d: Load Median Income 
+income <- read_csv(file = file.path(datapath,"ers-usda.csv")) %>%
+  select(median_inc = Median_Household_Income_2018, fips = fips)
 
-racial_demographics <- cc %>%
-  rename_all(.funs = tolower) %>%
-  filter(year == 12) %>% ## 2019
-  filter(agegrp == 0) %>% ## Totals only 
-  mutate(black_pop = ba_male + ba_female, 
-         white_pop = wa_male + wa_female, 
-         asian_pop = aa_male + aa_female, 
-         native_pop = ia_male + ia_female, 
-         pacific_pop = na_male + na_female, 
-         hisp_pop = h_male + h_female) %>%
-  select(state_fips = state, 
-         county_fips = county, 
-         county_name_long = ctyname,
-         total_pop = tot_pop,
-         black_pop, white_pop, asian_pop, native_pop,  pacific_pop, hisp_pop)
-
-## Step 1e: Load US Census Data - By Age 
-age_demographics <- cc %>%
-  rename_all(.funs = tolower) %>%
-  filter(year == 12) %>% ## 2019
-  filter(agegrp > 13) %>% ## Keep if 65 or older
-  select(state_fips = state, 
-         county_fips = county, 
-         total_pop = tot_pop) %>%
-  group_by(state_fips, county_fips) %>%
-  summarise(senior_pop = sum(total_pop))
-  
-## Step 1f: Merge Demographic Info with Case and Death Counts
+## Step 1e: Merge Median Income Info with Full Dataset
 df <- df %>%
-  left_join(racial_demographics, by=c('state_fips','county_fips')) %>%
-  left_join(age_demographics, by=c('state_fips','county_fips')) 
+  left_join(income, by = c('fips'))
 
-rm(racial_demographics, age_demographics)
-
-## Step 1g: Load US Mobility data
-mobility <- read_csv(file = file.path(datapath,"DL-us-mobility-daterow.csv")) %>%
-  rename_all(.funs = tolower) %>%
-  mutate(fips = as.numeric(fips)) %>%
-  drop_na(admin1) %>%
-  drop_na(admin2) %>%
-  select(date, fips, m_samples = samples, m50, m50_index) 
-
-## Step 1h: Merge Mobility Info with Full Dataset
-df <- df %>%
-  left_join(mobility, by = c('fips','date')) %>%
-  arrange(fips, date)
-
-rm(mobility)
-
-## Step 1i: Load Median Income 
-income <- read_csv(file = file.path(datapath,"nhgis0014_ds239_20185_2018_county_E.csv")) %>%
-  select(median_inc = AJZAE001, state_name = STATE, county_name_long = COUNTY)
-
-## Step 1j: Merge Median Income Info with Full Dataset
-df <- df %>%
-  left_join(income, by = c('state_name','county_name_long'))
-
-rm(income)
-rm(cc)
-```
-
-## Step 2: Summary Statistics and visualizations
-
-```{r basic visualization }
-
-df <- df[-c(3:4)] #Cleaning data to drop columns that are not needed
+# Step 1f: Data cleaning
+df <- df[-c(3:7)] # Cleaning data to drop columns that are not needed
 df <- rename(df, "population" = "Population")
+rm(income)
 
-########CASES
-
-# Creating a variable that contains the number of new confirmed cases
+# Step 1g: Creating a variable that contains the number of new confirmed cases
 df <- df %>% 
   arrange(date) %>% 
   group_by(fips)  %>% 
   mutate(new_cases = cases - lag(cases))
 
-# Creating a rolling 7-day average for the number of new confirmed cases
+# Step 1h: Creating a rolling 7-day average for the number of new confirmed cases
 df <- df %>% 
   arrange(date) %>% 
   group_by(fips) %>% 
   mutate(new_cases_7dayavg = rollmean(new_cases, k = 7, fill = NA))
 
-
-# Creating a new variable that calculates the seven-day rolling average of new cases per million
+# Step 1i: Creating a new variable that calculates the seven-day rolling average of new cases per million
 df <- df %>% 
   mutate(new_cases_7dayavg_per_mil_cap = new_cases_7dayavg / population * 1000000)
 
-######### DEATHS
-
-# Creating a variable that contains the number of deaths
+# Step 1j: Creating a variable that contains the number of deaths
   df <- df %>% arrange(date) %>% 
   group_by(fips)  %>% 
   mutate(new_deaths = deaths - lag(deaths))
 
-# Creating a rolling 7-day average for the number of new confirmed deaths
+# Step 1k: Creating a rolling 7-day average for the number of new confirmed deaths
 df <- df %>% 
   arrange(date) %>% 
   group_by(fips) %>% 
   mutate(new_deaths_7dayavg = rollmean(new_deaths, k = 7, fill = NA))
 
-
-# Creating a new variable that calculates the seven-day rolling average of new deaths per million
+# Step 1l: Creating a new variable that calculates the seven-day rolling average of new deaths per million
 df <- df %>% 
   mutate(new_deaths_7dayavg_per_mil_cap = new_deaths_7dayavg / population * 1000000)
+
+# Step 1m: Merging in land area in square miles and creating density variable
+land_area <- read_excel(path = file.path(datapath,"Land area by counties.xlsx"))
+land_area$fips <- as.numeric(land_area$STCOU)
+land_area$land_area <- land_area$LND110200D
+
+df <- df %>% 
+  left_join(land_area[,c(4,5)], by="fips") 
+rm(land_area)
+df <- df %>% 
+  mutate(density = population/land_area)
+
 ```
 
+## Step 2: Prepare Rally Data
 
-```{R}
-# ADD RALLY DATA HERE -- COULD FOLKS DO THE FOLLOWING
-# Add code to load in rally csv
+```{r}
+
+# Step 2a: Import rally data 
 rally_data <- read_xlsx("../data/rallies_cc_da.xlsx") 
 rally_data$date <- as.Date(rally_data$date)
 
-# Filter out rallies that predate February 26, 2020 (first community spread in February 26)
+# Step 2b: Filter out rallies that predate February 26, 2020 (first community spread in February 26)
 rally_data <- rally_data %>%
   filter(date > ymd(200226)) %>%
   filter(date <= max(df$date)) %>%
   select(date, fips) %>%
   mutate(rally = 1)
 
-# Full join rally and df by fips
-
+# Step 2c: Full join rally and COVID-19 data by FIPS code
 df <- df %>%
   full_join(rally_data, by = c("fips", "date")) %>%
   group_by(fips) %>%
   mutate(rally_ind = ifelse(sum(rally, na.rm = T) != 0, 1, 0))
 
+
+# Step 2d: Create days-to-rally variables for rally 1 and rally 2
 temp <- df %>%
   group_by(fips) %>%
   filter(sum(rally, na.rm = T) != 0) %>%
@@ -226,27 +177,193 @@ temp <- df %>%
   mutate(day_to_rally_2 = date - date[which(rally == 1)][2]) %>%
   select(date, fips, day_to_rally_1, day_to_rally_2)
 
+# Step 2f: Join in mutated data and clean
 df <- df %>%
   full_join(temp, by = c("fips", "date"))
-
 df$rally <- NULL
 rm(temp)
 rm(rally_data)
 ```
 
-```{r}
-land_area <- read_excel(path = file.path(datapath,"Land area by counties.xlsx"))
-land_area$fips <- as.numeric(land_area$STCOU)
+Step 3: Prepare Map Data
 
-#Merging land area in Km and creating density variable
-df <- df %>% 
-  left_join(land_area[,c(3,4)], by="fips") %>% 
-  mutate(density = population/LND110200D)
-rm(land_area)
+```{r}
+
+# Step 3a: Downloading map data
+us_map = map_data("county")
+fips <- data.frame(county.fips)
+us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
+us_map <- full_join(fips, us_map, by = "polyname")
+rm(fips)
+
+# Step 3b: Merging map data into dataframe
+df <- full_join(df, us_map, by = c("fips"))
+rm(us_map)
+
 ```
 
+Step 4: Descriptive Visual Analysis
+
+
 ```{r}
-# Boxplot based weighted on population density
+
+# Step 4a: Map of population
+map_0 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = population/1000)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Total population, millions",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Population size") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,1000),    # Forcing upper limit of 1 million pop
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+# Step 4b: Map of new confirmed COVID-19 cases per million people
+map_1 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg_per_mil_cap)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 cases per million people",
+        subtitle="on November 3, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,1000),    # Forcing upper limit of 1 thousand cases per million capita per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+# Step 4c: Map of of new confirmed COVID-19 cases
+map_2 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 cases",
+        subtitle="on November 3, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,150),    # Forcing upper limit of 150 cases per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+# # Step 4d: Map of cumulative COVID-19 deaths
+map_3 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = deaths)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of cumulative COVID-19 deaths",
+        subtitle="as of November 3, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Cumulative deaths") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,1000),    # Forcing upper limit of 1000 deaths
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+# # Step 4e: Map of new confirmed COVID-19 deaths per million people
+map_4 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg_per_mil_cap)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 deaths per million people",
+        subtitle="on November 3, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,100),    # Forcing upper limit of 100 deaths per million capita per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+# Step 4f: Map of new confirmed COVID-19 deaths
+map_5 <- df %>% filter(date == "2020-11-03") %>%
+   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg)) +
+      geom_polygon() + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(title="Number of new confirmed COVID-19 deaths",
+        subtitle="on November 3, 2020",
+        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
+        fill="Rolling 7-day average") +
+   scale_fill_viridis_c(option = "plasma",
+                               limits = c(0,10),    # Forcing upper limit of 100 deaths per day
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+
+map_0
+map_1
+map_2
+map_3
+map_4
+map_5
+```
+
+Step 5: Map of rally locations, sized by change in cases
+
+```{r}
+# Step 5a: Subset data of rallies
+
+rally <- df %>% filter(rally_ind==1) 
+df_singledata <- df %>% filter(date == "2020-11-03") 
+rally <- rally 
+rally <- rally %>% group_by(fips)  %>%
+  summarize_at(vars(long, lat), ~mean(range(.)))
+rally <- rally %>% rename("mean_long" = long, "mean_lat" = lat)
+rally_covid_data <- df %>% select(1:19)
+rally <- inner_join(rally, rally_covid_data, by = c("fips"))
+rally <- rally %>% filter(day_to_rally_1 == -14 | day_to_rally_1 == 14) 
+rally <- rally %>% distinct()
+rally <- rally %>% arrange(date) %>%  group_by(fips)  %>% 
+  mutate(delta_cases = cases - lag(cases))
+rally <- rally %>% filter(!is.na(delta_cases))
+
+# Step 5b: Map of cumulative COVID-19 cases per sq. mile and change in COVID-19 cases before vs. after rallies
+map_6 <- df_singledata %>%
+  ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = group,  fill=cases/land_area), color = "grey") + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+    geom_point(data=rally, aes(x=mean_long, y=mean_lat, size = delta_cases), color="purple4", alpha=0.75) + 
+        labs(title="Cumulative COVID-19 cases as of Election Day and rally locations",
+        subtitle="Circles indicate change in COVID-19 cases in counties, 2 weeks after vs. before rally",
+        size = "Increase in cases in rally counties",
+        caption= "Source: Center for Systems Science and Engineering, Johns Hopkins University.",
+        fill = " COVID-19 cases per sq. mile") +
+    scale_fill_continuous(low = "white", high = "red", na.value = NA,
+                          limits = c(0,5),    # Forcing upper limit of 1 thousand cumulative cases per million capita 
+                               oob = scales::squish) # Letting values out of bounds be squished to scale
+
+map_6
+
+```
+
+Step 6: Mean-centered graphs of COVID-19 cases among counties with rallies
+
+```{r}
+# Step 6a: Boxplot of new cases based weighted on population density
+
 p1 <- df %>%
   filter(rally_ind == 1) %>%
   filter(day_to_rally_1 %in% -21:21) %>%
@@ -259,11 +376,14 @@ p1 <- df %>%
   geom_vline(aes(xintercept = factor(0)),
                  colour = "red",
                  linetype = "dashed") +
-  labs(x = "Day to Rally", 
-       y = "New Cases per million cap (7-day average)") +
+  labs(title="Number of new confirmed COVID-19 cases per million people",
+              subtitle = "Weighted on population density",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") +
   theme_bw()
 
-# Lineplot for the median weighted on population density
+# Step 6b: Lineplot of new cases for the median weighted on population density
+
 p2 <- df %>%
   filter(rally_ind == 1) %>% # counties with rallies
   filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
@@ -277,146 +397,64 @@ p2 <- df %>%
   geom_vline(aes(xintercept = 0),
                  colour = "red",
                  linetype = "dashed") + 
-  labs(x = "Day to Rally", 
-       y = "New Cases per million cap (7-day average)") +
+  labs(title="Number of new confirmed COVID-19 cases per million people",
+         subtitle = "Median weighted on population density",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") +
   theme_bw()
+
+# Step 6c: Boxplot of new deaths based weighted on population density
+
+p3 <- df %>%
+  filter(rally_ind == 1) %>%
+  filter(day_to_rally_1 %in% -21:21) %>%
+  group_by(day_to_rally_1) %>%
+  mutate(mean_cases = mean(new_deaths_7dayavg_per_mil_cap, na.rm = T)) %>%
+  ggplot(aes(x = factor(day_to_rally_1),
+             y = new_deaths_7dayavg_per_mil_cap
+             )) +
+  geom_boxplot(fill = 'grey') +
+  geom_vline(aes(xintercept = factor(0)),
+                 colour = "red",
+                 linetype = "dashed") +
+  labs(title="Number of new confirmed COVID-19 deaths per million people",
+       subtitle = "Weighted on population density",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") +
+  theme_bw()
+
+# Step 6d: Lineplot of new deaths for the median weighted on population density
+
+p4 <- df %>%
+  filter(rally_ind == 1) %>% # counties with rallies
+  filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
+  group_by(day_to_rally_1) %>%
+  mutate(mean_cases = weighted.mean(new_deaths_7dayavg_per_mil_cap, density, na.rm = T)) %>% # weighted on population density
+  select(day_to_rally_1, mean_cases) %>% 
+  distinct() %>%
+  ggplot(aes(x = as.numeric(day_to_rally_1),
+             y = mean_cases)) +
+  geom_line() +
+  geom_vline(aes(xintercept = 0),
+                 colour = "red",
+                 linetype = "dashed") + 
+  labs(title="Number of new confirmed COVID-19 deaths per million people",
+  subtitle = "Median weighted on population density",
+    x = "Days until/after rally", 
+       y = "Rolling 7-day average") + ylim(0,4) +
+  theme_bw()
+
+
 p1
 p2
+p3
+p4
 ```
 
+Step 7: Propensity score matching
 
 ```{R}
-
-# Downloading map data
-us_map = map_data("county")
-fips <- data.frame(county.fips)
-us_map$polyname <- paste(us_map$region, us_map$subregion, sep = ",")
-us_map <- full_join(fips, us_map, by = "polyname")
-
-```
-
-
-```{R}
-# Merging map data into dataframe
-
-df <- full_join(df, us_map, by = c("fips"))
-rm(us_map)
-rm(fips)
-
-```
-
-
-
-```{R}
-
-
-df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg_per_mil_cap)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of new confirmed COVID-19 cases per million people",
-        subtitle="on August 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Rolling 7-day average") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,300),    # Forcing upper limit of 300 cases per million capita per day
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-
-df %>% filter(date == "2020-10-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = new_cases_7dayavg)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of new confirmed COVID-19 cases",
-        subtitle="on October 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Rolling 7-day average") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,150),    # Forcing upper limit of 150 cases per day
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-
-df %>% filter(date == "2020-10-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = deaths)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of cumulative COVID-19 deaths",
-        subtitle="as of October 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Cumulative deaths") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,1000),    # Forcing upper limit of 1000 deaths
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-
-
-df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg_per_mil_cap)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of new confirmed COVID-19 deaths per million people",
-        subtitle="on August 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Rolling 7-day average") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,100),    # Forcing upper limit of 100 deaths per million capita per day
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-
-df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = new_deaths_7dayavg)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Number of new confirmed COVID-19 deaths",
-        subtitle="on August 1, 2020",
-        caption="Source: Center for Systems Science and Engineering, Johns Hopkins University",
-        fill="Rolling 7-day average") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,100),    # Forcing upper limit of 100 deaths per day
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-
-df %>% filter(date == "2020-08-01") %>%
-   ggplot(aes(x = long, y = lat, group = group, fill = total_pop)) +
-      geom_polygon() + 
-      theme(panel.grid.major = element_blank(), 
-            panel.background = element_blank(),
-            axis.title = element_blank(), 
-            axis.text = element_blank(),
-            axis.ticks = element_blank()) +
-      labs(title="Total population",
-        caption="Source: US Census Bureau",
-        fill="Population size") +
-   scale_fill_viridis_c(option = "plasma",
-                               limits = c(0,1000000),    # Forcing upper limit of 1,000,000 pop
-                               oob = scales::squish) # Letting values out of bounds be squished to scale
-```
-
-```{R}
-
-# Code for adding circles that identify where rallies were located
-# geom_point(data=d, aes(x=lon, y=lat), color="red", size=30, alpha=0.5)
-
-```
-```{r}
-
-## Propensity score matching
-
+# Step 7a: Propensity score matching based on median income and population density
 
 fit <- glm(rally_ind ~ median_inc + density ,data=df)
 
@@ -425,6 +463,5 @@ summary(fit)
 df$score <- predict(fit, df)
 
 
-# we do not have median income for some counties that had rallies
 ```
 
