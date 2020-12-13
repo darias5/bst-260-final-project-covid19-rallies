@@ -37,17 +37,7 @@ datapath <- paste(path,'data/', sep = "/")
 
 In-person rallies are large events and may contribute to the spread of COVID-19; in many jurisdictions in the United States, large gatherings have been prohibited or are regulated to promote social distancing and reduce the transmission of COVID-19, and the federal government has issued guidance underscoring the risk large events pose when social distancing may not be readily enforceable. In the lead-up to the November 3 2020 Presidential election, President Trump conducted numerous in-person rallies, both before and after the White House COVID-19 outbreak of September-October 2020. In the 30 days prior to the election, President Trump held 45 in-person rallies across multiple states (Vice President Biden has held numerous drive-in rallies during the same period). Given social distancing guidelines and numerous COVID-19 diagnoses among the President’s re-election campaign (including the President himself), numerous public health researchers, professionals, and observers have raised concerns that the President’s in-person rallies may be contributing to the spread of COVID-19.
 
-Conflicting investigations and working papers have suggested that rallies are and are not associated with local spikes in COVID-19 transmission (Dave et al 2020; Bernheim et al 2020). Motivated by the urgency of the COVID-19 pandemic and the saliency of whether in-person rallies may be associated with excess cases and mortality, we are interested in using time-series data on county-level COVID-19 cases and deaths to visualize trends in transmission in counties in which in-person campaign rallies were hosted and to compare these counties to others in which in-person events were not held. We hope that this analysis will provide additional information on the potential impacts and risks of in-person rallies, encouraging safer measures and accountability for activites that pose risk to the public.
-
-Project Objectives
-
-Research goals: To examine whether the presence of a Trump rally in a county was associated with a significant change in the trend of COVID-19 cases and deaths in the ensuing period, compared to similar regions that did not host rallies
-
-Academic goals: Learn more about how COVID data is collected, organized, and reported Learn about the selection of controls in observational studies and the implications for drawing causal inferences Learn about different strategies for visualizing time-series data and testing for discontinuities
-
-Implications: Increases in COVID-19 cases and deaths that are potentially attributable to political rallies would underscore the importance of social distance guidelines
-
-Optional features: Choice of control -- propensity score matching, synthetic controls
+Conflicting investigations and working papers have suggested that rallies are and are not associated with local spikes in COVID-19 transmission (Dave et al 2020; Bernheim et al 2020). Motivated by the urgency of the COVID-19 pandemic and the saliency of whether in-person rallies may be associated with excess cases and mortality, we are interested in using time-series data on county-level COVID-19 cases and deaths to visualize trends in transmission in counties in which in-person campaign rallies were hosted and to compare these counties to others in which in-person events were not held. We hope that this analysis will provide additional information on the potential impacts and risks of in-person rallies, encouraging safer measures and accountability for activities that pose risk to the public.
 
 **Related Work**
 
@@ -55,7 +45,7 @@ Two major working papers concerning rallies and COVID-19 transmission are Dave e
 
 The working paper by Dave and colleagues presents an in-depth inquiry of one presidential campaign rally held by President Trump on June 20, 2020 at the Bank of Oklahoma arena in Tulsa, Oklahoma. The investigators were able to use mobility data to investigate whether non-resident visits to the county increased due to the rally, and whether social distancing behaviors changed among the resident population. The investigators found that while non-resident visitors increased by 25%, social distancing among residents did not attenuate. Using synthetic controls and difference-in-difference, the investigators argue that there was no statistically significant increase in COVID-19 cases associated with the rally.
 
-Bernheim et al., in contrast, explores 18 rallies, matching each to similar counties that did not hold rallies. Counties were matched using 24 different procedures, using regression models that included demographic characteristics, trajectory of cases, and post-event outcomes. The analysis suggests that the average treatment effect associated with hosting a rally likely increased COVID-19 cases by more than 250 per 100,000 people. Extrapolating the the whole sample, Bernheim and colleagues suggest that the 18 rallies resulted in 30,000 additional COVID-19 cases and 700 excess deaths.
+Bernheim et al., in contrast, explores 18 rallies, matching each to similar counties that did not hold rallies. Counties were matched using 24 different procedures, using regression models that included demographic characteristics, trajectory of cases, and post-event outcomes. The analysis suggests that the average treatment effect associated with hosting a rally likely increased COVID-19 cases by more than 250 per 100,000 people. Extrapolating to the whole sample, Bernheim and colleagues suggest that the 18 rallies resulted in 30,000 additional COVID-19 cases and 700 excess deaths.
 
 Our approach is chiefly inspired from these two papers, further inspired by our courses' discussion of time-series infectious disease data and choropleth design. Our analysis echoes many of the assignments and in-class demonstrations conducted in the course modules on Data Visualization and Shiny app design.
 
@@ -78,7 +68,7 @@ Our data were collected from the following sources:
 
 * County land area size data (used to calculate population density) were obtained from the U.S. Census Bureau: https://www.census.gov/library/publications/2011/compendia/usa-counties-2011.html
 
-We joined county data sets using Federal Information Processing Standard (FIPS) codes, rather the county names, in order to use a standardized referencing system that would minimize the risk of errors and incomplete joins. Each county in the U.S. is assigned a FIPS code, which encodes both the state the county is in as well as the county itself, based on the intigers used in the code. The complete FIPS codes for counties can be found at the U.S Department of Agriculture: https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697. 
+We joined county data sets using Federal Information Processing Standard (FIPS) codes, rather the county names, in order to use a standardized referencing system that would minimize the risk of errors and incomplete joins. Each county in the U.S. is assigned a FIPS code, which encodes both the state the county is in as well as the county itself, based on the integers used in the code. The complete FIPS codes for counties can be found at the U.S Department of Agriculture: https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697. 
 
 ## Step 1: Prepare COVID-19 Data
 
@@ -257,7 +247,7 @@ rm(us_map)
 
 **Exploratory Analysis**
 
-We began by visually analyzing our county-level data using heat maps of the United States, in order to identify patterns, missing data, and other issues in coding. Visually displaying the data using a heat map provided both an elegant way to quickly confirm data completeness as well as provide a general sense of the prevaling trends in population distribution, median income, and COVID-19 cases and deaths.
+We began by visually analyzing our county-level data using heat maps of the United States, in order to identify patterns, missing data, and other issues in coding. Visually displaying the data using a heat map provided both an elegant way to quickly confirm data completeness as well as provide a general sense of the prevailing trends in population distribution, median income, and COVID-19 cases and deaths.
 
 In the graphs below, we present the snapshot of the epidemic on Election Day 2020. To account for variation in day-to-day reporting, we further generated and conducted visual analysis of the 7-day rolling average of cases and deaths, and related both to the population size to provide for per-capita figures. The population-adjusted rolling averages would be used later in the final analysis.
 
@@ -390,13 +380,13 @@ map_5
 map_6
 ```
 
-our visual analysis confirmed that our data was successfully merged and joined. Our first attempt at visual analysis revealed a missing county across all heat maps: Oglala Lakota County in South Dakota. Further investigation identified that this county was renamed in 2014 and had received a new FIPS code. While the new code and county name appeared in several data sets, the out-dated name and code appeared in the US map data, and thus was resulting in a persistent blank spot on the map. We added code to over-write the out-dated name and code, and thus addressed the missing county issue.
+our visual analysis confirmed that our data was successfully merged and joined. Our first attempt at visual analysis revealed a missing county across all heat maps: Oglala Lakota County in South Dakota. Further investigation identified that this county was renamed in 2014 and had received a new FIPS code. While the new code and county name appeared in several data sets, the outdated name and code appeared in the US map data, and thus was resulting in a persistent blank spot on the map. We added code to over-write the outdated name and code, and thus addressed the missing county issue.
 
-Our maps of population and median income conform with expectations: populations are concentrated in cities, with larger counties (in terms of land area) generally having fewer people (major exceptions include counties in Florida and California, which include non-independent cities). Income appears to be higher in more populous cities, with the lowest levels of income found in Appalachian counties, counties on the southern half of the East Coast, and counties in the Mississipi and Great Plains regions. 
+Our maps of population and median income conform with expectations: populations are concentrated in cities, with larger counties (in terms of land area) generally having fewer people (major exceptions include counties in Florida and California, which include non-independent cities). Income appears to be higher in more populous cities, with the lowest levels of income found in Appalachian counties, counties on the southern half of the East Coast, and counties in the Mississippi and Great Plains regions. 
 
 In terms of the COVID-19 pandemic, as of Election Day we can see that the number of new cases and deaths were higher in metropolitan regions, due to the population size of these counties. When adjusted into per-capita rates, the burden of the pandemic on Election Day was highest among counties in the West North Central states, as well as several counties in Georgia and New Mexico. This is consistent with epidemiological observations that the pandemic appears to have worsened in North Central states that tended to be affected later than East Coast states in 2020.
 
-Turning to rally data, we began by mapping the locations of rallies. As expected, the rallies tended to be held in locations in battleground states: Arizona, Nevada, Florida, Georgia, the Carolinas, Ohio, Pennsylvannia, Michigan, and Wisconsin. The rallies tended to be held in largely populated counties and cities.
+Turning to rally data, we began by mapping the locations of rallies. As expected, the rallies tended to be held in locations in battleground states: Arizona, Nevada, Florida, Georgia, the Carolinas, Ohio, Pennsylvania, Michigan, and Wisconsin. The rallies tended to be held in largely populated counties and cities.
 
 Step 5: Map of rally locations, sized by change in cases
 
@@ -480,31 +470,15 @@ rm(rally)
 
 
 ```
-As a final part of our preliminary analysis, we wanted to understand whether or not cases increased in counties that held rallies, and whether the location of counties overlaped with higher burdens of cumulative cases over the course of the election year. To do this, we generated a heatmap of cumulative cases per square mile and overlayed the location of rallies on this map. We sized the points identifying the rallies to the number of new cases comparing 2 weeks after rally to 2 weeks prior. All counties saw increases, with the median increase being 1177. The largest increase occured in Maricopa County, which saw 53,169 new cases over the month-long period. 
+As a final part of our preliminary analysis, we wanted to understand whether cases increased in counties that held rallies, and whether the location of counties overlapped with higher burdens of cumulative cases over the course of the election year. To do this, we generated a heatmap of cumulative cases per square mile and overlayed the location of rallies on this map. We sized the points identifying the rallies to the number of new cases comparing 2 weeks after rally to 2 weeks prior. All counties saw increases, with the median increase being 1177. The largest increase occurred in Maricopa County, which saw 53,169 new cases over the month-long period. 
 
-Using a tile plot, we visualized the rolling 7-day average of new COVID-19 cases per million capita in counties that held rallies. We can see that the counties had varying levels of new cases at baseline, but that most progressed to worsening case rates over time. In most counties, we observe that the case rates were worsening prior to the rally, but the most extreme case rates are observed approximately 7-10 days after rallies occured, which corresponds to the likely detection period if a spike in transmissions occured with rally events.
+Using a tile plot, we visualized the rolling 7-day average of new COVID-19 cases per million capita in counties that held rallies. We can see that the counties had varying levels of new cases at baseline, but that most progressed to worsening case rates over time. In most counties, we observe that the case rates were worsening prior to the rally, but the most extreme case rates are observed approximately 7-10 days after rallies occurred, which corresponds to the likely detection period if a spike in transmissions occurred with rally events.
 
 **Final Analysis**
 
 Our final analysis sought to understand the change in cases and deaths in counties with rallies and to compare them to counties that did not hold rallies. In our first step, we constructed population-density weighted lineplots and boxplots to examine the trends and distributions of COVID-19 cases and deaths in counties that held rallies in the 3 weeks before and after a rally.
 
-Our analysis indicates that 
-
-To support the primary motivating question, we then needed to identify counties without rallies to act as suitable controls for the counties with rallies. 
-
-
-In order to match the control counties to each county that had held a rally, we applied propensity score matching approach. 
-
-- In the matching model, we generally considered county's population density and its median income to calculated the propensity score, the probability of being a county with a rally. For each rally-county, a nearest neighbor matching method was used to match 5 counties as the control. 
-- There are totally 65 counties that had held a Trump rally, and correspondingly, 325 counties were matched as the control.
-The mean data, weighted on population density and focused on 3 weeks before and after, was then calculated in the rally and control group and presented in a line plot. It could be clearly seen that:
-
-- The mean cases for countries that held a rally is larger than that in control group, even before the rally had happened. 
-- With the hold of rallies, the divergence became significantly bigger, and met with a climax on around 2 weeks after the rallies.
-This result successfully met with our goal: the presence of a Trump rally in a county was associated with a significant increase in the trend of COVID-19 cases in the ensuing period, compared to similar regions that did not host rallies.
-
-- Moreover, the presence of a Trump rally in a county might indicate a general more severe pandamic situation.
-
+Our analysis indicates that approximately 1 week after rallies, several counties saw increases in COVID-19 cases, followed by a leveling off. This suggests that a spike in cases may have occurred after rallies, with cases falling thereafter. Deaths show no such pattern and appeared to be relatively stable across counties over time, before and after rallies occurred. That this pattern appears even though rallies occurred on different dates provides support for the conclusion that the increase in cases may have been due to rallies, rather than the general trend of the COVID-19 pandemic in the United States.
 
 
 Step 6: Mean-centered graphs of COVID-19 cases among counties with rallies
@@ -571,7 +545,7 @@ p3 <- df %>%
        y = "Rolling 7-day average") +
   theme_bw()
 
-# Step 6d: Lineplot of new deaths for the mean weighted on population density
+# Step 6d: Line plot of new deaths for the mean weighted on population density
 
 p4 <- df %>%
   filter(rally_ind == 1) %>% # counties with rallies
@@ -599,6 +573,10 @@ p3
 p4
 
 ```
+To support the primary motivating question, however, we then needed to identify counties without rallies to act as suitable controls for the counties with rallies, in order to determine whether the increases observed were also seen in counties without rallies. If both counties with and without rallies saw a similar upward shift in cases, rallies themselves may not be associated with an increase in cases.
+
+In order to match the control counties to counties that had held a rally, we applied a propensity score matching approach. In the matching model, we considered a county's population density and its median income to calculate the propensity score (the probability of being a county with a rally). For each rally-county, a nearest neighbor matching method was used to match 5 counties as the control. 
+
 
 Step 7: Propensity score matching
 
@@ -650,12 +628,14 @@ rm(dta_m_2)
 rm(dta_m_3)
 
 ```
+There were 65 counties that had held a Trump rally, and correspondingly, 325 counties were matched as the control. Our visual analysis of the region of common support supported our conclusion that the matching was successful, with meaningful overlap in the propensity scores of both rally and control counties.
 
+The time-series data for the matched controls were centered around the date of the rally held in their matched county. The mean COVID-19 cases and death rates for each day until/after a rally were then calculated in the rally and control group by taking the weighted average of county-level data, weighted by population density.
 
 Step 8: Mean-centered graphs of COVID-19 cases among counties with rallies vs. without
 
 ```{r}
-# Step 8a:  Lineplot of new cases for the mean weighted on population density in case vs. control counties
+# Step 8a:  Line plot of new cases for the mean weighted on population density in case vs. control counties
 
 p5_data <- dta_m %>%
   filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
@@ -680,7 +660,7 @@ p5 <- p5_data %>%
 
 p5
 
-# Step 8b:  Lineplot of new cases, case vs. control counties
+# Step 8b:  Line plot of new cases, case vs. control counties
 
 p6_data <- dta_m %>%
   filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
@@ -712,7 +692,7 @@ p6 <- p6_data %>%
   
 p6 
 
-# # Step 8c:  Lineplot of difference in  cases, case vs. control counties
+# # Step 8c:  Line plot of difference in cases, case vs. control counties
 
 p7_data <- p5_data %>% 
   group_by(day_to_rally_1) %>%
@@ -739,3 +719,15 @@ p7
   
 
 ```
+
+
+
+The graphs of cases in rally counties vs. controls shows that, while cases increased in both groups, the increase in counties that held a rally was far higher and reached a much greater peak 1 week after rallies than the trends in control counties. When the difference in these trends was plotted, two observations were made clearer: 1) even prior to the date of a rally, the counties that held rallies had higher case rates than counties that were matched and did not hold rallies, over the same period for their matched treated counties, and 2) the difference between rally and control counties accelerated after rallies were held, and then narrowed after 1 week. 
+
+We find this graph to provide evidence to support the conclusion that the presence of a Trump rally in a county was associated with a significant increase in the trend of COVID-19 cases in the ensuing period, compared to similar regions that did not host rallies over the same periods of time. Moreover, rallies were held in counties that had higher per-capita case rates than counties of similar population densities and median income, suggesting the possibility of a common factor associated with both being a county with a worse COVID-19 case rate and being a county where a Trump rally would be hosted.
+
+We note, however, that counties had unique and divergent epidemiological trends, and that visualizing individual counties might provide utility in identifying specific counties that saw spikes and others that appeared to have avoided rally-associated increases in cases. To provide for an interactive analysis, we further constructed a Shiny app, so that individuals could observe county-specific trends in specific counties and compare different measures of the pandemic for visualization.
+
+Our analysis should be understood with a number of limitations. Primarily, we are utilizing county-level data, and have no information on the movement of individuals within or across counties. It is likely that individuals travelling to rallies traveled both within counties and across counties, meaning that transmission could have been affected outside of counties that hosted a rally. Second, our propensity score matching approach is but one way in which matching could have been conducted. While matching based on population density and income was reasonable, additional demographic data, pre-rally COVID-19 trends, and other factors could have been included. Alternatively, we could have utilized a synthetic controls method to construct counterfactual synthetic versions of the rally counties for comparison; in future work, we would intend to utilize this approach and compare it to the propensity score method to understand how the choice of controls affects the conclusion of this investigation. 
+
+Our exploratory and final analysis provides evidence to support the conclusion that the presence of a Trump rally in a county associated with a significant change in the trend of COVID-19 cases, though not deaths, in the ensuing period, compared to similar counties that did not host rallies. We find evidence of a geographic overlap in locations of counties and locations of increased COVID-19 cases, in and around counties that held rallies and that counties that held rallies saw higher levels of cases per capita than counties that did not hold rallies, even prior to rallies taking place. 
