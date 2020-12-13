@@ -7,8 +7,27 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{R}
-knitr::opts_chunk$set(echo = TRUE)
+```{r echo=FALSE}
+
+## Load Libraries
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(foreach)
+library(ggplot2)
+library(maps)
+library(viridis)
+library(zoo)
+library(readxl)
+library (MatchIt)
+
+## Directory and file paths 
+#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+#path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
+# path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
+path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+outputpath <- paste(path,'results/', sep = "/")
+datapath <- paste(path,'data/', sep = "/")
 
 ```
 
@@ -40,34 +59,23 @@ Our approach is further inspired by our courses' discussion of time-series infec
 
 **Initial Questions**
 
-* Was the presence of a Trump rally in a county associated with a significant change in the trend of COVID-19 cases and deaths in the ensuing period, compared to similar regions that did not host rallies?
-* Were counties that held rallies 
+* Is there a geographic overlap in locations of counties and locations of increased COVID-19 cases, in and around counties that held rallies? 
+* Did COVID-19 cases increase in counties that held rallies over the subsequent 3 weeks?
+* Were counties that held rallies experiencing different levels of COVID-19 cases and deaths (prior to rallies) than comparable counties that did not hold rallies?
+* Was the presence of a Trump rally in a county associated with a significant change in the trend of COVID-19 cases and deaths in the ensuing period, compared to similar counties that did not host rallies?
 
+**Data**
 
-```{r}
+Our data were collected from the following sources:
 
-## Load Libraries
-library(tidyverse)
-library(dplyr)
-library(lubridate)
-library(foreach)
-library(ggplot2)
-library(maps)
-library(viridis)
-library(zoo)
-library(readxl)
-library (MatchIt)
+* COVID-19 case and death data at the county-level were collected from the Center for Systems Science and Engineering, Johns Hopkins University: https://github.com/CSSEGISandData/COVID-19
 
+* Exposure data (location and date of rallies) were compiled manually from https://en.wikipedia.org/wiki/List_of_post-election_Donald_Trump_rallies, and were verified against the campaign's posted schedule (https://www.donaldjtrump.com/events/) and composites of the President's official schedule (https://factba.se/topic/calendar). 
 
-## Directory and file paths 
-#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-#path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
-# path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
-path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-outputpath <- paste(path,'results/', sep = "/")
-datapath <- paste(path,'data/', sep = "/")
+* Median income of counties in 2018:
 
-```
+* Land data:
+
 
 ## Step 1: Prepare COVID-19 Data
 
@@ -95,7 +103,6 @@ cases <- read_csv(file = file.path(datapath,"time_series_covid19_confirmed_US.cs
          full_name = Combined_Key ) %>%
   pivot_longer(contains("/"), names_to = "date", values_to = "cases") %>%
   mutate(date = as.Date(date, "%m/%d/%y"))
-
 
 ## Step 1b: Import Death Dataset 
 deaths <- read_csv(file = file.path(datapath,"time_series_covid19_deaths_US.csv")) %>%
@@ -177,6 +184,8 @@ df <- df %>%
 ```
 
 ## Step 2: Prepare Rally Data
+
+*Note: FIPS codes were assigned based on the county in which the rally took place or the county containing the largest share of the nearest metropolitan area. For example, rallies held in airports near cities were coded to have taken place in the county containing the city, rather than the airport.*
 
 ```{r}
 
