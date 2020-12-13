@@ -7,9 +7,7 @@
 # Directory and file paths 
 ##########################################
 
-
-path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
-#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
+path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -189,10 +187,24 @@ ui <- fluidPage(
   
   tabsetPanel(
     
+
     ##  Tab: Bar plot, specific on rally
     {
       tabPanel(
         "Rally-related", 
+        
+        p("Novel coronavirus disease 2019 (COVID-19)is caused due to coronavirus 2 (SARS-CoV-2)
+      and is characterized by severe acute respiratory symptoms.This was first identified 
+      in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
+      throughout the world, and is now recognized as",
+          a("pandemic by WHO.",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline")),
+          
+          p("Coronavirus is spread from person to person contact thorugh respiratory droplets.
+          In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
+      President Trump had conducted numerous in-person rallies, both before and after the 
+      White House COVID-19 outbreak of September-October 2020 in the United States of America.
+      Public health researchers, professionals, and observers had concerns that these in-person 
+      rallies may be contributing to the spread of COVID-19."),
         
         ##  Title Panel
         titlePanel("3 Weeks Before and After rallies"),
@@ -200,6 +212,12 @@ ui <- fluidPage(
         sidebarLayout(
           ##  "Buttons"
           sidebarPanel(
+            p("Use this tab to visualize the increase in deaths and cases per capita for counties
+              which had Trump rallies. Please select upto 5 counties to view the trends.
+              You can also choose between the graph of New Cases and Death using the radiobutton."),
+            br(), 
+           
+          
             selectizeInput(
               inputId = "chosen_county_rally",
               label = "Please specify counties with rally",
@@ -228,12 +246,32 @@ ui <- fluidPage(
       tabPanel(
         "Summary",
         
+        p("Novel coronavirus disease 2019 (COVID-19)is caused due to coronavirus 2 (SARS-CoV-2)
+      and is characterized by severe acute respiratory symptoms.This was first identified 
+      in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
+      throughout the world, and is now recognized as",
+          a("pandemic by WHO",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline"),
+          
+          "Coronavirus is spread from person to person contact thorugh respiratory droplets.
+          In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
+      President Trump had conducted numerous in-person rallies, both before and after the 
+      White House COVID-19 outbreak of September-October 2020 in the United States of America.
+      Public health researchers, professionals, and observers had concerns that these in-person 
+      rallies may be contributing to the spread of COVID-19."),
+        
         ##  Title Panel
         titlePanel("New Cases on 7-day Average per million capita"),
         ##  Sidebar 
         sidebarLayout(
           ##  "Buttons"
           sidebarPanel(
+            
+            p("Use this tab to visualize compare the differences in counties with rallies and
+            other counties of your choice. Please select one county will rally and upto 5 
+            other counties to view the trends.You can also choose between the graph of New Cases
+            and Death using the radiobutton."),
+            br(), 
+            
             selectInput(
               inputId = "chosen_rally_county_summary",
               label = "Please specify a county with rally",
@@ -267,11 +305,29 @@ ui <- fluidPage(
     ##  Tab for spaital plot
     tabPanel(
       "Spatial Plot",
+      
+      p("Novel coronavirus disease 2019 (COVID-19)is caused due to coronavirus 2 (SARS-CoV-2)
+      and is characterized by severe acute respiratory symptoms.This was first identified 
+      in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
+      throughout the world, and is now recognized as",
+        a("pandemic by WHO",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline"),
+        
+        "Coronavirus is spread from person to person contact thorugh respiratory droplets.
+          In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
+      President Trump had conducted numerous in-person rallies, both before and after the 
+      White House COVID-19 outbreak of September-October 2020 in the United States of America.
+      Public health researchers, professionals, and observers had concerns that these in-person 
+      rallies may be contributing to the spread of COVID-19."),
       ##  Title Panel
       titlePanel("Map of COVID-19 data per million people"),
       
       sidebarLayout(
         sidebarPanel(
+          
+          p("Use this tab to visualize the temporal trends of COVID-19 across different regions in the 
+          United States. Please select a date to veiw the heatmap on a particular day.
+          You can also choose between the graph of New Cases and Death using the radiobutton."),
+          br(), 
           dateInput(
             inputId = "chosen_date_geo",
             label = "Please select a date",
