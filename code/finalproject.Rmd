@@ -255,8 +255,9 @@ rm(us_map)
 
 **Exploratory Analysis**
 
+We began by visually analyzing our county-level data using heat maps of the United States, in order to identify patterns, missing data, and other issues in coding. Visually displaying the data using a heat map provided both an elegant way to quickly confirm data completeness as well as provide a general sense of the prevaling trends in population distribution, median income, and COVID-19 cases and deaths.
 
-Step 4: Descriptive Visual Analysis
+In the graphs below, we present the snapshot of the epidemic on Election Day 2020. To account for variation in day-to-day reporting, we further generated and conducted visual analysis of the 7-day rolling average of cases and deaths, and related both to the population size to provide for per-capita figures. The population-adjusted rolling averages would be used later in the final analysis.
 
 ```{r}
 
@@ -386,6 +387,8 @@ map_4
 map_5
 map_6
 ```
+
+our visual analysis confirmed that 
 
 Step 5: Map of rally locations, sized by change in cases
 
