@@ -12,11 +12,37 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-To-Do List
-1) Kritika -- add county fips numbers to rallies.csv -- https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697
-2) Daniel -- loading updated rallies.csv to dataframe
-3) Daniel -- fix choropleth data
-4) All -- next week, work on centering time data around rallies (before and after), start visualizations of time series data
+**Overview and Motivation**
+
+In-person rallies are large events and may contribute to the spread of COVID-19; in many jurisdictions in the United States, large gatherings have been prohibited or are regulated to promote social distancing and reduce the transmission of COVID-19, and the federal government has issued guidance underscoring the risk large events pose when social distancing may not be readily enforceable. In the lead-up to the November 3 2020 Presidential election, President Trump conducted numerous in-person rallies, both before and after the White House COVID-19 outbreak of September-October 2020. In the 30 days prior to the election, President Trump held 45 in-person rallies across multiple states (Vice President Biden has held numerous drive-in rallies during the same period). Given social distancing guidelines and numerous COVID-19 diagnoses among the President’s re-election campaign (including the President himself), numerous public health researchers, professionals, and observers have raised concerns that the President’s in-person rallies may be contributing to the spread of COVID-19.
+
+Conflicting investigations and working papers have suggested that rallies are and are not associated with local spikes in COVID-19 transmission (Dave et al 2020; Bernheim et al 2020). Motivated by the urgency of the COVID-19 pandemic and the saliency of whether in-person rallies may be associated with excess cases and mortality, we are interested in using time-series data on county-level COVID-19 cases and deaths to visualize trends in transmission in counties in which in-person campaign rallies were hosted and to compare these counties to others in which in-person events were not held. We hope that this analysis will provide additional information on the potential impacts and risks of in-person rallies, encouraging safer measures and accountability for activites that pose risk to the public.
+
+Project Objectives
+
+Research goals: To examine whether the presence of a Trump rally in a county was associated with a significant change in the trend of COVID-19 cases and deaths in the ensuing period, compared to similar regions that did not host rallies
+
+Academic goals: Learn more about how COVID data is collected, organized, and reported Learn about the selection of controls in observational studies and the implications for drawing causal inferences Learn about different strategies for visualizing time-series data and testing for discontinuities
+
+Implications: Increases in COVID-19 cases and deaths that are potentially attributable to political rallies would underscore the importance of social distance guidelines
+
+Optional features: Choice of control -- propensity score matching, synthetic controls
+
+**Related Work**
+
+Two major working papers concerning rallies and COVID-19 transmission are Dave et al. 2020 and Bernheim et al. 2020. The papers reach opposing conclusions, motivating our investigation. 
+
+The working paper by Dave and colleagues 
+
+Bernehim et al., in contrast, 
+
+Our approach is further inspired by our courses' discussion of time-series infectious disease data and choropleth design. Our analysis echoes many of the assignments and in-class demonstrations conducted in the course modules on Data Visualization and Shiny app design.
+
+**Initial Questions**
+
+* Was the presence of a Trump rally in a county associated with a significant change in the trend of COVID-19 cases and deaths in the ensuing period, compared to similar regions that did not host rallies?
+* Were counties that held rallies 
+
 
 ```{r}
 
