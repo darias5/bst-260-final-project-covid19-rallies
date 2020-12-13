@@ -388,7 +388,13 @@ map_5
 map_6
 ```
 
-our visual analysis confirmed that 
+our visual analysis confirmed that our data was successfully merged and joined. Our first attempt at visual analysis revealed a missing county across all heat maps: Oglala Lakota County in South Dakota. Further investigation identified that this county was renamed in 2014 and had received a new FIPS code. While the new code and county name appeared in several data sets, the out-dated name and code appeared in the US map data, and thus was resulting in a persistent blank spot on the map. We added code to over-write the out-dated name and code, and thus addressed the missing county issue.
+
+Our maps of population and median income conform with expectations: populations are concentrated in cities, with larger counties (in terms of land area) generally having fewer people (major exceptions include counties in Florida and California, which include non-independent cities). Income appears to be higher in more populous cities, with the lowest levels of income found in Appalachian counties, counties on the southern half of the East Coast, and counties in the Mississipi and Great Plains regions. 
+
+In terms of the COVID-19 pandemic, as of Election Day we can see that the number of new cases and deaths were higher in metropolitan regions, due to the population size of these counties. When adjusted into per-capita rates, the burden of the pandemic on Election Day was highest among counties in the West North Central states, as well as several counties in Georgia and New Mexico. This is consistent with epidemiological observations that the pandemic appears to have worsened in North Central states that tended to be affected later than East Coast states in 2020.
+
+Turning to rally data, we began by mapping the locations of rallies. As expected, the rallies tended to be held in locations in battleground states: Arizona, Nevada, Florida, Georgia, the Carolinas, Ohio, Pennsylvannia, Michigan, and Wisconsin. The rallies tended to be held in largely populated counties and cities.
 
 Step 5: Map of rally locations, sized by change in cases
 
@@ -409,8 +415,23 @@ rally <- rally %>% arrange(date) %>%  group_by(fips)  %>%
   mutate(delta_cases = cases - lag(cases))
 rally <- rally %>% filter(!is.na(delta_cases))
 
-# Step 5b: Map of cumulative COVID-19 cases per sq. mile and change in COVID-19 cases before vs. after rallies
+# Step 5b: Map of rally locations and population of counties
 map_7 <- df_singledata %>%
+  ggplot() +
+  geom_polygon(aes(x = long, y = lat, group = group), fill = "white", color = "grey") + 
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(),
+            axis.title = element_blank(), 
+            axis.text = element_blank(),
+            axis.ticks = element_blank()) +
+    geom_point(data=rally, aes(x=mean_long, y=mean_lat, size = population/1000000), color="purple4", alpha=0.75) + 
+        labs(title="Donald Trump presidential campaign rally locations",
+        size = "Population, millions",
+        caption= "Source: Center for Systems Science and Engineering, Johns Hopkins University.") 
+
+
+# Step 5c: Map of cumulative COVID-19 cases per sq. mile and change in COVID-19 cases before vs. after rallies
+map_8 <- df_singledata %>%
   ggplot() +
   geom_polygon(aes(x = long, y = lat, group = group,  fill=cases/land_area), color = "grey") + 
       theme(panel.grid.major = element_blank(), 
@@ -428,11 +449,14 @@ map_7 <- df_singledata %>%
                           limits = c(0,5),    # Forcing upper limit of 1 thousand cumulative cases per million capita 
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
-rm(df_singledata)
 map_7
+map_8
+
+rm(df_singledata)
 
 
 ```
+As a final part of our preliminary analysis, we 
 
 **Final Analysis**
 
@@ -602,8 +626,9 @@ p5 <- p5_data %>%
                  colour = "red",
                  linetype = "dashed") + 
   labs(title="Number of new confirmed COVID-19 cases per million people",
-         subtitle = "Mean weighted on population density",
-    x = "Days until/after rally", 
+       subtitle = "Mean weighted on population density",
+       color = "Rally or control (rally = 1)",
+       x = "Days until/after rally", 
        y = "Rolling 7-day average") 
 
 p5
@@ -656,8 +681,8 @@ p7 <- p7_data %>%
                  colour = "red",
                  linetype = "dashed") + 
   labs(title="Number of new confirmed COVID-19 cases per million people",
-         subtitle = "Mean weighted on population density",
-    x = "Days until/after rally", 
+       subtitle = "Mean weighted on population density",
+       x = "Days until/after rally",
        y = "Rolling 7-day average") + ylim(-10, 150) +
   geom_hline(aes(yintercept = 0),
              colour = "blue",
