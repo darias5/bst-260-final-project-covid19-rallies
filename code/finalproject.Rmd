@@ -20,6 +20,8 @@ library(viridis)
 library(zoo)
 library(readxl)
 library (MatchIt)
+library(RColorBrewer)
+
 
 ## Directory and file paths 
 #path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
@@ -448,11 +450,31 @@ map_8 <- df_singledata %>%
                           limits = c(0,5),    # Forcing upper limit of 1 thousand cumulative cases per million capita 
                                oob = scales::squish) # Letting values out of bounds be squished to scale
 
-map_7
-map_8
-
 summary(rally$delta_cases)
 rally$county_name[rally$delta_cases == max(rally$delta_cases)]
+
+# Step 5d: Tile plot displaying COVID-19 cases per capita, in counties with rallies
+
+graph_tile1 <- df %>% 
+  filter(rally_ind == 1) %>% # counties with rallies
+  filter(day_to_rally_1 %in% -21:21) %>% # 3 weeks before and after
+  select(day_to_rally_1, new_cases_7dayavg_per_mil_cap, county_name) %>% 
+  distinct() %>%
+  ggplot(aes(day_to_rally_1, county_name, fill = new_cases_7dayavg_per_mil_cap)) +
+  geom_tile(colour = "grey50") + 
+  scale_x_continuous(expand=c(0,0)) +
+  scale_fill_gradientn(colors=brewer.pal(9,"Reds"), trans="sqrt") +
+    labs(title="COVID-19 new cases rate by counties with rallies", subtitle = "Square root transformed",
+       x="Day(s) to rally", y = "Counties with rallies",
+       fill = "Cases per million residents")+
+theme(axis.text.y =  element_text(size = "5", hjust = 0))
+
+
+map_7
+map_8
+graph_tile1
+
+
 rm(df_singledata)
 rm(rally)
 
@@ -460,7 +482,30 @@ rm(rally)
 ```
 As a final part of our preliminary analysis, we wanted to understand whether or not cases increased in counties that held rallies, and whether the location of counties overlaped with higher burdens of cumulative cases over the course of the election year. To do this, we generated a heatmap of cumulative cases per square mile and overlayed the location of rallies on this map. We sized the points identifying the rallies to the number of new cases comparing 2 weeks after rally to 2 weeks prior. All counties saw increases, with the median increase being 1177. The largest increase occured in Maricopa County, which saw 53,169 new cases over the month-long period. 
 
+Using a tile plot, we visualized the rolling 7-day average of new COVID-19 cases per million capita in counties that held rallies. We can see that the counties had varying levels of new cases at baseline, but that most progressed to worsening case rates over time. In most counties, we observe that the case rates were worsening prior to the rally, but the most extreme case rates are observed approximately 7-10 days after rallies occured, which corresponds to the likely detection period if a spike in transmissions occured with rally events.
+
 **Final Analysis**
+
+Our final analysis sought to understand the change in cases and deaths in counties with rallies and to compare them to counties that did not hold rallies. In our first step, we constructed population-density weighted lineplots and boxplots to examine the trends and distributions of COVID-19 cases and deaths in counties that held rallies in the 3 weeks before and after a rally.
+
+Our analysis indicates that 
+
+To support the primary motivating question, we then needed to identify counties without rallies to act as suitable controls for the counties with rallies. 
+
+
+In order to match the control counties to each county that had held a rally, we applied propensity score matching approach. 
+
+- In the matching model, we generally considered county's population density and its median income to calculated the propensity score, the probability of being a county with a rally. For each rally-county, a nearest neighbor matching method was used to match 5 counties as the control. 
+- There are totally 65 counties that had held a Trump rally, and correspondingly, 325 counties were matched as the control.
+The mean data, weighted on population density and focused on 3 weeks before and after, was then calculated in the rally and control group and presented in a line plot. It could be clearly seen that:
+
+- The mean cases for countries that held a rally is larger than that in control group, even before the rally had happened. 
+- With the hold of rallies, the divergence became significantly bigger, and met with a climax on around 2 weeks after the rallies.
+This result successfully met with our goal: the presence of a Trump rally in a county was associated with a significant increase in the trend of COVID-19 cases in the ensuing period, compared to similar regions that did not host rallies.
+
+- Moreover, the presence of a Trump rally in a county might indicate a general more severe pandamic situation.
+
+
 
 Step 6: Mean-centered graphs of COVID-19 cases among counties with rallies
 
