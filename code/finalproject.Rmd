@@ -400,13 +400,12 @@ Step 5: Map of rally locations, sized by change in cases
 
 ```{r}
 # Step 5a: Subset data of rallies
-
 rally <- df %>% filter(rally_ind==1) 
 df_singledata <- df %>% filter(date == "2020-11-03") 
 rally <- rally 
 rally <- rally %>% group_by(fips)  %>%
   summarize_at(vars(long, lat), ~mean(range(.)))
-rally <- rally %>% rename("mean_long" = long, "mean_lat" = lat)
+rally <- rally %>% rename("mean_long" = long, "mean_lat" = lat) #To center rally geom_points
 rally_covid_data <- df %>% select(1:19)
 rally <- inner_join(rally, rally_covid_data, by = c("fips"))
 rally <- rally %>% filter(day_to_rally_1 == -14 | day_to_rally_1 == 14) 
@@ -452,11 +451,14 @@ map_8 <- df_singledata %>%
 map_7
 map_8
 
+summary(rally$delta_cases)
+rally$county_name[rally$delta_cases == max(rally$delta_cases)]
 rm(df_singledata)
+rm(rally)
 
 
 ```
-As a final part of our preliminary analysis, we 
+As a final part of our preliminary analysis, we wanted to understand whether or not cases increased in counties that held rallies, and whether the location of counties overlaped with higher burdens of cumulative cases over the course of the election year. To do this, we generated a heatmap of cumulative cases per square mile and overlayed the location of rallies on this map. We sized the points identifying the rallies to the number of new cases comparing 2 weeks after rally to 2 weeks prior. All counties saw increases, with the median increase being 1177. The largest increase occured in Maricopa County, which saw 53,169 new cases over the month-long period. 
 
 **Final Analysis**
 
