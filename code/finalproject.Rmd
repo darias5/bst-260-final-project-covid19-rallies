@@ -51,11 +51,11 @@ Optional features: Choice of control -- propensity score matching, synthetic con
 
 Two major working papers concerning rallies and COVID-19 transmission are Dave et al. 2020 and Bernheim et al. 2020. The papers reach opposing conclusions, motivating our investigation. 
 
-The working paper by Dave and colleagues 
+The working paper by Dave and colleagues presents an in-depth inquiry of one presidential campaign rally held by President Trump on June 20, 2020 at the Bank of Oklahoma arena in Tulsa, Oklahoma. The investigators were able to use mobility data to investigate whether non-resident visits to the county increased due to the rally, and whether social distancing behaviors changed among the resident population. The investigators found that while non-resident visitors increased by 25%, social distancing among residents did not attenuate. Using synthetic controls and difference-in-difference, the investigators argue that there was no statistically significant increase in COVID-19 cases associated with the rally.
 
-Bernehim et al., in contrast, 
+Bernheim et al., in contrast, explores 18 rallies, matching each to similar counties that did not hold rallies. Counties were matched using 24 different procedures, using regression models that included demographic characteristics, trajectory of cases, and post-event outcomes. The analysis suggests that the average treatment effect associated with hosting a rally likely increased COVID-19 cases by more than 250 per 100,000 people. Extrapolating the the whole sample, Bernheim and colleagues suggest that the 18 rallies resulted in 30,000 additional COVID-19 cases and 700 excess deaths.
 
-Our approach is further inspired by our courses' discussion of time-series infectious disease data and choropleth design. Our analysis echoes many of the assignments and in-class demonstrations conducted in the course modules on Data Visualization and Shiny app design.
+Our approach is chiefly inspired from these two papers, further inspired by our courses' discussion of time-series infectious disease data and choropleth design. Our analysis echoes many of the assignments and in-class demonstrations conducted in the course modules on Data Visualization and Shiny app design.
 
 **Initial Questions**
 
@@ -72,12 +72,15 @@ Our data were collected from the following sources:
 
 * Exposure data (location and date of rallies) were compiled manually from https://en.wikipedia.org/wiki/List_of_post-election_Donald_Trump_rallies, and were verified against the campaign's posted schedule (https://www.donaldjtrump.com/events/) and composites of the President's official schedule (https://factba.se/topic/calendar). 
 
-* Median income of counties in 2018:
+* Median income of counties in 2018 data were obtained from the Economic Research Service of the U.S. Department of Agriculture: https://www.ers.usda.gov/data-products/county-level-data-sets/ 
 
-* Land data:
+* County land area size data (used to calculate population density) were obtained from the U.S. Census Bureau: https://www.census.gov/library/publications/2011/compendia/usa-counties-2011.html
 
+We joined county data sets using Federal Information Processing Standard (FIPS) codes, rather the county names, in order to use a standardized referencing system that would minimize the risk of errors and incomplete joins. Each county in the U.S. is assigned a FIPS code, which encodes both the state the county is in as well as the county itself, based on the intigers used in the code. The complete FIPS codes for counties can be found at the U.S Department of Agriculture: https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697. 
 
 ## Step 1: Prepare COVID-19 Data
+
+*COVID-19 data were filtered to exclude American territories and cruise ships, as well as unassigned cases/deaths and blank entries for FIPS.*
 
 ```{r}
 
@@ -248,6 +251,10 @@ df <- full_join(df, us_map, by = c("fips"))
 rm(us_map)
 
 ```
+
+
+**Exploratory Analysis**
+
 
 Step 4: Descriptive Visual Analysis
 
@@ -423,6 +430,8 @@ map_7
 
 
 ```
+
+**Final Analysis**
 
 Step 6: Mean-centered graphs of COVID-19 cases among counties with rallies
 
