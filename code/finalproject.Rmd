@@ -22,16 +22,12 @@ library(readxl)
 library (MatchIt)
 library(RColorBrewer)
 
-
 ## Directory and file paths 
-#path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-#path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
-# path <- "/Users/zhaotianxiao/Desktop/BST 260/Final Project/bst-260-final-project-covid19-rallies/"
-path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/"
-outputpath <- paste(path,'results/', sep = "/")
+path <- "~/3. PhD/Y2/Fall/BST 260/bst-260-final-project-covid19-rallies/" #Update to your pathway
 datapath <- paste(path,'data/', sep = "/")
 
 ```
+Authors: Daniel Arias, Kritika Anand, and Tianxiao Zhao
 
 **Overview and Motivation**
 
