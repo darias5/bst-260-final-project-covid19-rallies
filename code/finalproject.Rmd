@@ -1,6 +1,6 @@
 ---
 title: "BST 260 - Final Project"
-subtitle: "In-person Presidential campaign rallies and trends in country-level COVID-19 cases and deaths"
+subtitle: "In-person presidential campaign rallies and trends in country-level COVID-19 cases and deaths"
 authors: "Daniel Arias, Kritika Anand, and Tianxiao Zhao"
 output: html_document
 editor_options: 
