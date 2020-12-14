@@ -35,6 +35,8 @@ Our data were collected from the following sources:
 * Propensity score matching to allow comparison in counties with and without rallies 
 * Shiny app to allow for visualization of trends in specific counties and comparison across different measures of disease burden
 
-**Screencast link**
+**Screencast Link**
 
+**Guide to Files**
+Our Rmarkdown code and knitted HTML file can be found under the folder "code." All the necessary data to run the analysis can be found in the folder "data". We have also added a guideline for our Shiny app, which can be found in the main folder.
  
