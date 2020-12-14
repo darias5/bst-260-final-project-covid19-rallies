@@ -7,7 +7,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r echo=FALSE}
+```{r include=FALSE}
 
 ## Load Libraries
 library(tidyverse)
@@ -244,7 +244,6 @@ rm(us_map)
 
 ```
 
-
 **Exploratory Analysis**
 
 We began by visually analyzing our county-level data using heat maps of the United States, in order to identify patterns, missing data, and other issues in coding. Visually displaying the data using a heat map provided both an elegant way to quickly confirm data completeness as well as provide a general sense of the prevailing trends in population distribution, median income, and COVID-19 cases and deaths.
@@ -380,7 +379,7 @@ map_5
 map_6
 ```
 
-our visual analysis confirmed that our data was successfully merged and joined. Our first attempt at visual analysis revealed a missing county across all heat maps: Oglala Lakota County in South Dakota. Further investigation identified that this county was renamed in 2014 and had received a new FIPS code. While the new code and county name appeared in several data sets, the outdated name and code appeared in the US map data, and thus was resulting in a persistent blank spot on the map. We added code to over-write the outdated name and code, and thus addressed the missing county issue.
+Our visual analysis confirmed that our data was successfully merged and joined. Our first attempt at visual analysis revealed a missing county across all heat maps: Oglala Lakota County in South Dakota. Further investigation identified that this county was renamed in 2014 and had received a new FIPS code. While the new code and county name appeared in several data sets, the outdated name and code appeared in the US map data, and thus was resulting in a persistent blank spot on the map. We added code to over-write the outdated name and code, and thus addressed the missing county issue.
 
 Our maps of population and median income conform with expectations: populations are concentrated in cities, with larger counties (in terms of land area) generally having fewer people (major exceptions include counties in Florida and California, which include non-independent cities). Income appears to be higher in more populous cities, with the lowest levels of income found in Appalachian counties, counties on the southern half of the East Coast, and counties in the Mississippi and Great Plains regions. 
 
