@@ -7,7 +7,7 @@
 # Directory and file paths 
 ##########################################
 
-path <- "C:/Users/kriti/OneDrive - Harvard University/HSPH Semester/Semester 3/BST 260/Final Project/Final Project/bst-260-final-project-covid19-rallies/"
+path <- ".."
 outputpath <- paste(path,'results/', sep = "/")
 datapath <- paste(path,'data/', sep = "/")
 
@@ -248,16 +248,16 @@ ui <- fluidPage(
         
         p("Novel coronavirus disease 2019 (COVID-19)is caused due to coronavirus 2 (SARS-CoV-2)
       and is characterized by severe acute respiratory symptoms.This was first identified 
-      in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
-      throughout the world, and is now recognized as",
-          a("pandemic by WHO",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline"),
-          
-          "Coronavirus is spread from person to person contact thorugh respiratory droplets.
+          in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
+          throughout the world, and is now recognized as",
+          a("pandemic by WHO.",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline")),
+        
+        p("Coronavirus is spread from person to person contact thorugh respiratory droplets.
           In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
-      President Trump had conducted numerous in-person rallies, both before and after the 
-      White House COVID-19 outbreak of September-October 2020 in the United States of America.
-      Public health researchers, professionals, and observers had concerns that these in-person 
-      rallies may be contributing to the spread of COVID-19."),
+          President Trump had conducted numerous in-person rallies, both before and after the 
+          White House COVID-19 outbreak of September-October 2020 in the United States of America.
+          Public health researchers, professionals, and observers had concerns that these in-person 
+          rallies may be contributing to the spread of COVID-19."),
         
         ##  Title Panel
         titlePanel("New Cases on 7-day Average per million capita"),
@@ -308,16 +308,16 @@ ui <- fluidPage(
       
       p("Novel coronavirus disease 2019 (COVID-19)is caused due to coronavirus 2 (SARS-CoV-2)
       and is characterized by severe acute respiratory symptoms.This was first identified 
-      in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
-      throughout the world, and is now recognized as",
-        a("pandemic by WHO",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline"),
-        
-        "Coronavirus is spread from person to person contact thorugh respiratory droplets.
-          In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
-      President Trump had conducted numerous in-person rallies, both before and after the 
-      White House COVID-19 outbreak of September-October 2020 in the United States of America.
-      Public health researchers, professionals, and observers had concerns that these in-person 
-      rallies may be contributing to the spread of COVID-19."),
+        in Wuhan, Hubei, China, in late 2019. This highly communicable disease rapidly spread
+        throughout the world, and is now recognized as",
+        a("pandemic by WHO.",href="https://www.who.int/news-room/detail/29-06-2020-covidtimeline")),
+      
+      p("Coronavirus is spread from person to person contact thorugh respiratory droplets.
+        In-person presidential rallies are large events and may contribute to the spread of COVID-19. 
+        President Trump had conducted numerous in-person rallies, both before and after the 
+        White House COVID-19 outbreak of September-October 2020 in the United States of America.
+        Public health researchers, professionals, and observers had concerns that these in-person 
+        rallies may be contributing to the spread of COVID-19."),
       ##  Title Panel
       titlePanel("Map of COVID-19 data per million people"),
       
